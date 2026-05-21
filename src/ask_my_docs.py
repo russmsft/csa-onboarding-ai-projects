@@ -8,6 +8,7 @@ Usage:
   3. Run: python ask_my_docs.py
 
 Authentication: uses DefaultAzureCredential (az login / managed identity).
+Required role: Cognitive Services OpenAI Contributor (not Cognitive Services User)
 Results are saved to outputs/results_<timestamp>.md automatically.
 """
 import json
@@ -70,6 +71,19 @@ def create_vector_store(file_id: str, store_name: str):
 
     print(f"  Indexing complete. Chunks indexed: {vs.file_counts.completed}")
     return vs
+
+
+_file_name_cache: dict[str, str] = {}
+
+
+def resolve_filename(file_id: str) -> str:
+    """Resolve a file ID to its original filename, with caching."""
+    if file_id not in _file_name_cache:
+        try:
+            _file_name_cache[file_id] = openai.files.retrieve(file_id).filename
+        except Exception:
+            _file_name_cache[file_id] = file_id
+    return _file_name_cache[file_id]
 
 
 def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini") -> str:
@@ -182,8 +196,9 @@ def main():
         sources = []
         for ann in annotations:
             if hasattr(ann, "file_citation"):
-                print(f"   ↳ Source: {ann.file_citation.file_id}")
-                sources.append(ann.file_citation.file_id)
+                filename = resolve_filename(ann.file_citation.file_id)
+                print(f"   ↳ Source: {filename}")
+                sources.append(filename)
         results.append({"question": q, "answer": answer, "sources": sources})
 
     print("\n" + "="*60)

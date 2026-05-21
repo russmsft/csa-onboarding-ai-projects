@@ -8,7 +8,17 @@ Give your documents a voice. This guide wires up Azure OpenAI File Search so you
 
 A Python script that uploads a document to Azure OpenAI, creates a managed vector store over it, then uses the Responses API with `file_search` to answer questions in plain English. Every answer includes document citations so you can verify every claim.
 
-This is the fastest path to production RAG — no embeddings code, no external vector database, no agent framework required.
+This is the fastest path to production RAG (Retrieval-Augmented Generation) — no embeddings code, no external vector database, no agent framework required.
+
+---
+
+## Business Value
+
+| | |
+|--|--|
+| **Who** | Any team that needs answers from internal documents — legal, HR, finance, engineering |
+| **Why** | Reduces time-to-answer from hours of manual search to seconds; every answer is cited so it can be verified |
+| **Outcome** | A reusable RAG pattern you can demo to any customer in under 10 minutes, then leave behind as a co-build starter |
 
 ---
 
@@ -25,7 +35,15 @@ This is the fastest path to production RAG — no embeddings code, no external v
   ```
 - Python 3.11+
 - `openai >= 1.30.0`, `azure-identity`, and `python-dotenv` installed
-- Azure CLI logged in (`az login`) with Cognitive Services User on the resource
+- Azure CLI logged in (`az login`) with **Cognitive Services OpenAI Contributor** on the resource (the lower "Cognitive Services User" role does not grant permission to upload files)
+
+  Assign the RBAC (Role-Based Access Control) role via CLI:
+  ```bash
+  az role assignment create \
+    --assignee $(az ad signed-in-user show --query id -o tsv) \
+    --role "Cognitive Services OpenAI Contributor" \
+    --scope /subscriptions/<sub-id>/resourceGroups/<rg>/providers/Microsoft.CognitiveServices/accounts/<resource-name>
+  ```
 - A document you want to query (PDF, .txt, .md — a product spec, runbook, or policy works great)
 
 ```bash
@@ -53,6 +71,26 @@ AzureOpenAI client (DefaultAzureCredential)
 ```
 
 **Data flow:** Document uploaded → chunked and embedded automatically → stored in a managed vector store → retrieved at query time → passed as context to GPT-4.1-mini → response includes source citations.
+
+---
+
+---
+
+## Pre-Demo Checklist
+
+Run through this before every demo to avoid surprises:
+
+| # | Check | Notes |
+|---|-------|-------|
+| 1 | Azure subscription active | Confirm in [portal.azure.com](https://portal.azure.com) |
+| 2 | AIServices resource deployed | `az cognitiveservices account show --name <name> --resource-group <rg>` |
+| 3 | GPT-4.1-mini deployed | Check under Deployments in the resource |
+| 4 | Role assigned | **Cognitive Services OpenAI Contributor** — allow 5+ minutes for propagation after assignment |
+| 5 | `az login` completed | `az account show` should return your subscription |
+| 6 | `.env` configured | `AZURE_OPENAI_ENDPOINT` set to your resource endpoint |
+| 7 | `sample.txt` in repo root | Or substitute your own document |
+
+> ⚠️ **Role propagation lag:** After assigning the Cognitive Services OpenAI Contributor role, wait at least 5 minutes before running the script. The API will return a 403 until propagation completes.
 
 ---
 
@@ -89,6 +127,8 @@ Store it in a `.env` file — never hardcode it. Copy `.env.example` to get star
 cp .env.example .env
 # Then edit .env and set AZURE_OPENAI_ENDPOINT
 ```
+
+> **API version note:** The script currently uses `2025-04-01-preview`. If a stable GA version is available for your deployment, prefer it — check [Azure OpenAI API releases](https://learn.microsoft.com/azure/ai-services/openai/api-version-deprecation) and update `api_version` in `src/ask_my_docs.py` accordingly.
 
 ### Step 2 — Install dependencies
 
@@ -192,10 +232,21 @@ def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini"):
                 if hasattr(block, "annotations"):
                     annotations.extend(block.annotations)
 
+    # Resolve file IDs to human-readable filenames
+    file_cache = {}
+    def get_filename(file_id):
+        if file_id not in file_cache:
+            try:
+                file_cache[file_id] = openai.files.retrieve(file_id).filename
+            except Exception:
+                file_cache[file_id] = file_id
+        return file_cache[file_id]
+
     print(f"💬 {answer}")
     for ann in annotations:
         if hasattr(ann, "file_citation"):
-            print(f"   ↳ Source: {ann.file_citation.file_id}")
+            filename = get_filename(ann.file_citation.file_id)
+            print(f"   ↳ Source: {filename}")
     return answer
 ```
 
@@ -272,6 +323,12 @@ Done. To reuse this vector store, set VECTOR_STORE_ID=vs-xyz789
 
 **To query your own document**, edit `src/ask_my_docs.py` and change the `_REPO_ROOT / "sample.txt"` line to point at your file.
 
+**Try a "trap question" to verify abstention:**
+```python
+ask("What is the company's parental leave policy?", vs.id)
+```
+The model should respond with something like: *"The provided documents do not contain information about parental leave policy."* — not a hallucinated answer. This is a key demo moment: show customers that the model refuses to guess.
+
 **Add a second document:**
 
 ```python
@@ -287,11 +344,44 @@ openai.vector_stores.files.create(
 
 ---
 
+> ⚠️ **Deprecation notice:** The older **Assistants API** (threads, runs, `beta.assistants.*`) retires on **26 August 2026**. This guide already uses the replacement — the **Responses API** — so no migration is needed. If you encounter tutorials using `client.beta.assistants` or `create_thread()`, they will stop working after that date.
+
+---
+
 ## Common Mistakes
 
 - **Scanned PDFs return empty text.** The file upload API does basic text extraction. If your PDF is a scanned image, pre-process it with Azure AI Document Intelligence first (see Guide 05).
 - **Model answers questions not in the docs.** Check your system prompt — the `instructions` parameter should include `"Only answer using the provided documents."` to prevent hallucination.
 - **Reusing a vector store across sessions.** Note the `VECTOR_STORE_ID` printed at the end of each run — pass it directly to `ask()` instead of re-uploading your document every time.
+
+---
+
+---
+
+## Enterprise Considerations
+
+Before taking this pattern to a production customer, address these five areas:
+
+| Area | What to cover | Azure feature |
+|------|--------------|---------------|
+| **Data privacy** | Confirm data does not leave the tenant and is not used for model training | [Azure OpenAI data privacy & DPA](https://learn.microsoft.com/legal/cognitive-services/openai/data-privacy) |
+| **Data residency** | Documents stay in your chosen Azure region; use DataZone deployments for EU data boundary | [Azure OpenAI in-region processing](https://learn.microsoft.com/azure/ai-services/openai/concepts/data-residency) |
+| **Content safety** | Enable Prompt Shields to block indirect prompt injection via uploaded documents | [Azure AI Content Safety — Prompt Shields](https://learn.microsoft.com/azure/ai-services/content-safety/concepts/jailbreak-detection) |
+| **Network security** | Disable public access; route all traffic through Private Endpoints | [Azure OpenAI Private Endpoints](https://learn.microsoft.com/azure/ai-services/cognitive-services-virtual-networks) |
+| **Encryption** | Data encrypted at rest by default; use Customer-Managed Keys (CMK) for regulated industries | [Azure OpenAI CMK](https://learn.microsoft.com/azure/ai-services/openai/encrypt-data-at-rest) |
+
+---
+
+## When to Use This vs. Alternatives
+
+| Pattern | Best for | Not ideal for |
+|---------|----------|--------------|
+| **This guide** (Azure OpenAI File Search) | Quick RAG over <100 documents, fast prototyping, single-tenant demos | Large document libraries, complex hybrid search, multi-index scenarios |
+| **Azure AI Foundry Agents** | Multi-tool agents, code interpreter, persistent agent definitions | Simple Q&A where agent overhead isn't needed |
+| **Azure AI Search + AOAI** | Enterprise-scale search, hybrid keyword+semantic, metadata filtering at scale | Fast demo setup — higher configuration overhead |
+| **"Add your data" in Azure OpenAI Studio** | No-code proof of concept | Production deployments, programmatic control |
+
+**CSA talk-track:** *"We're using the simplest possible pattern here — no infrastructure beyond an Azure AI Services resource. This gives you a demo in 10 minutes. When you need filters, access control per document, or millions of documents, Azure AI Search is the right layer to add underneath."*
 
 ---
 
@@ -303,9 +393,39 @@ openai.vector_stores.files.create(
 
 ---
 
+---
+
+## Cost Transparency
+
+Vector storage is not free. Understand the charges before a customer ask:
+
+| Cost item | Pricing | Notes |
+|-----------|---------|-------|
+| Vector storage | ~$0.10/GB/day | First 1 GB included free per resource |
+| File Search queries | Included in model token cost | No separate per-query charge |
+| File upload | No charge | Storage cost begins after upload |
+
+**Clean up unused vector stores** to avoid ongoing charges:
+
+```python
+# List all vector stores
+for vs in openai.vector_stores.list().data:
+    print(vs.id, vs.name, vs.status)
+
+# Delete a specific vector store
+openai.vector_stores.delete(vector_store_id="vs_xxx")
+```
+
+> **Tip for demos:** Delete the vector store at the end of each demo session. The `VECTOR_STORE_ID` printed at the end of the script makes it easy to reference.
+
+---
+
 ## Resources
 
 - [Azure OpenAI File Search](https://learn.microsoft.com/azure/ai-services/openai/how-to/file-search)
 - [Azure OpenAI Responses API](https://learn.microsoft.com/azure/ai-services/openai/how-to/responses)
-- [AzureOpenAI Python SDK](https://learn.microsoft.com/python/api/overview/azure/openai-readme)
+- [Azure OpenAI API version lifecycle](https://learn.microsoft.com/azure/ai-services/openai/api-version-deprecation)
+- [Azure OpenAI data privacy](https://learn.microsoft.com/legal/cognitive-services/openai/data-privacy)
+- [Cognitive Services OpenAI Contributor role](https://learn.microsoft.com/azure/ai-services/openai/how-to/role-based-access-control)
 - [DefaultAzureCredential auth chain](https://learn.microsoft.com/python/api/azure-identity/azure.identity.defaultazurecredential)
+- [Azure AI Content Safety — Prompt Shields](https://learn.microsoft.com/azure/ai-services/content-safety/concepts/jailbreak-detection)
