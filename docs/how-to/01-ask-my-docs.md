@@ -50,6 +50,21 @@ AzureOpenAI client (DefaultAzureCredential)
 
 ## Step-by-Step Build
 
+> **Already done for you:** The complete, runnable script is at `src/ask_my_docs.py` in this repo. You don't need to write any code — just follow Steps 1–2 to configure your environment, then jump to [Test It](#test-it) to run it.
+>
+> The steps below explain **what each part of the script does** so you understand it well enough to adapt it for your own projects.
+
+| Guide step | Where it lives in `src/ask_my_docs.py` |
+|-----------|----------------------------------------|
+| Step 1 — Set endpoint | `.env` file + `load_dotenv()` at the top |
+| Step 2 — Install deps | one-time terminal command |
+| Step 3 — Create client | lines 28–37, the `AzureOpenAI(...)` block |
+| Step 4 — Upload + vector store | `upload_pdf()` and `create_vector_store()` functions |
+| Step 5 — Ask questions | `ask()` function |
+| Step 6 — Wire together | `main()` at the bottom |
+
+---
+
 ### Step 1 — Set your endpoint
 
 ```bash
