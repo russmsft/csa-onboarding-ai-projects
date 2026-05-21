@@ -1,0 +1,21 @@
+{
+  "document": "sample.txt",
+  "vector_store_id": "vs_qJ2iTR2Q43LiJ2dmQE0qW1LP",
+  "results": [
+    {
+      "question": "What is the main subject of this document?",
+      "answer": "The main subject of the document is onboarding guidance for new Cloud Solution Architect (CSA) hires at Microsoft. It includes key requirements such as completing the Azure Fundamentals certification, shadowing customer engagements, and delivering technical presentations within specified timeframes. Important dates related to these milestones are also provided in the document.",
+      "sources": []
+    },
+    {
+      "question": "List any key requirements or commitments mentioned.",
+      "answer": "The key requirements or commitments mentioned are:\n\n1. Complete Azure Fundamentals certification within 30 days.\n2. Shadow 3 customer engagements in the first 60 days.\n3. Deliver your first technical presentation by day 90.\n\nImportant dates associated with these commitments are:\n- Day 30: AZ-900 certification deadline.\n- Day 60: First customer meeting debrief due.\n- Day 90: Ramp-up review with manager.\n\nThese requirements are outlined in the Microsoft Cloud Solution Architect - Onboarding Guide.",
+      "sources": []
+    },
+    {
+      "question": "Are there any deadlines or dates referenced?",
+      "answer": "Yes, there are several deadlines and dates referenced in the document:\n\n- Complete Azure Fundamentals certification within 30 days\n- Shadow 3 customer engagements in the first 60 days\n- Deliver your first technical presentation by day 90\n\nImportant dates highlighted are:\n- Day 30: AZ-900 certification deadline\n- Day 60: First customer meeting debrief due\n- Day 90: Ramp-up review with manager\n\nThese are part of the onboarding guide for a Microsoft Cloud Solution Architect role.",
+      "sources": []
+    }
+  ]
+}
