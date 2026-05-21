@@ -16,13 +16,15 @@ This is the fastest path to production RAG — no custom chunking pipeline, no v
 
 - Azure subscription with Microsoft Foundry (AI Foundry hub + project created at [https://ai.azure.com](https://ai.azure.com))
 - Python 3.11+
-- `azure-ai-projects >= 1.0.0` and `azure-identity` installed
+- `azure-ai-projects >= 2.1.0`, `openai >= 2.37.0`, and `azure-identity` installed
 - Azure CLI logged in (`az login`) with Contributor on the Foundry project
 - A PDF you want to query (a product spec, runbook, or HR policy works fine)
 
 ```bash
-pip install azure-ai-projects azure-identity
+pip install "azure-ai-projects>=2.1.0" azure-identity python-dotenv
 ```
+
+> **Note on SDK versions:** As of May 2026, `azure-ai-projects` 2.x uses the OpenAI client (`get_openai_client()`) for all file, vector store, and agent interactions. The older `client.agents.*` sub-client from v1.x is no longer available. The code in this guide targets v2.1.0+.
 
 ---
 
@@ -63,7 +65,7 @@ Store it in a `.env` file — never hardcode it.
 ### Step 2 — Install dependencies
 
 ```bash
-pip install azure-ai-projects azure-identity python-dotenv
+pip install "azure-ai-projects>=2.1.0" azure-identity python-dotenv
 ```
 
 ### Step 3 — Create the client
@@ -77,10 +79,15 @@ from azure.identity import DefaultAzureCredential
 load_dotenv()
 
 PROJECT_ENDPOINT = os.environ["FOUNDRY_PROJECT_ENDPOINT"]
+
+# AIProjectClient authenticates with your az login token
 client = AIProjectClient(
     endpoint=PROJECT_ENDPOINT,
     credential=DefaultAzureCredential()
 )
+
+# All file, vector store, and agent calls go through the OpenAI client
+openai = client.get_openai_client()
 ```
 
 `DefaultAzureCredential` picks up your `az login` token automatically. No API keys needed.
@@ -89,120 +96,108 @@ client = AIProjectClient(
 
 ```python
 import pathlib
+import time
 
-def upload_pdf_and_create_vector_store(pdf_path: str, store_name: str) -> str:
-    """Upload a PDF and return the vector store ID."""
-    pdf_bytes = pathlib.Path(pdf_path).read_bytes()
-    filename = pathlib.Path(pdf_path).name
+def upload_pdf(pdf_path: str):
+    """Upload a PDF to Foundry and return the file object."""
+    path = pathlib.Path(pdf_path)
+    print(f"Uploading {path.name} ({path.stat().st_size // 1024} KB)...")
+    with open(path, "rb") as f:
+        uploaded = openai.files.create(file=f, purpose="assistants")
+    print(f"  File ID: {uploaded.id}  status={uploaded.status}")
+    return uploaded
 
-    # Upload the file to Foundry
-    uploaded = client.agents.upload_file_and_poll(
-        file=pdf_bytes,
-        filename=filename,
-        purpose="assistants"
-    )
-    print(f"Uploaded file: {uploaded.id}")
+def create_vector_store(file_id: str, store_name: str):
+    """Create a vector store, attach the file, and poll until indexed."""
+    print(f"Creating vector store '{store_name}'...")
+    vs = openai.vector_stores.create(name=store_name, file_ids=[file_id])
+    print(f"  Vector store ID: {vs.id}  status={vs.status}")
 
-    # Create a vector store with the file attached
-    vector_store = client.agents.create_vector_store_and_poll(
-        file_ids=[uploaded.id],
-        name=store_name
-    )
-    print(f"Vector store ready: {vector_store.id}  status={vector_store.status}")
-    return vector_store.id
+    for _ in range(30):
+        if vs.status == "completed":
+            break
+        time.sleep(3)
+        vs = openai.vector_stores.retrieve(vs.id)
+        print(f"  Waiting for indexing... status={vs.status}")
+    else:
+        raise TimeoutError("Vector store indexing did not complete within 90 seconds.")
+
+    print(f"  Indexing complete. Chunks: {vs.file_counts.completed}")
+    return vs
 ```
 
-> **Gotcha:** `create_vector_store_and_poll` blocks until the indexing job finishes. For large PDFs (>50 MB) this can take a minute. If you hit a timeout, increase the `polling_interval` kwarg or switch to `create_vector_store` and poll manually.
+> **Gotcha:** For large PDFs (>50 MB) indexing can take a couple of minutes. The polling loop above retries for up to 90 seconds; increase `range(30)` and `time.sleep(3)` for larger files.
 
-### Step 5 — Create the agent
+### Step 5 — Ask a question using the Responses API
+
+In SDK v2.1.0, you pass the `file_search` tool directly to `openai.responses.create()`. No separate agent registration needed for basic Q&A.
 
 ```python
-from azure.ai.projects.models import FileSearchTool, PromptAgentDefinition
-
-def create_ask_my_docs_agent(vector_store_id: str) -> str:
-    """Create the agent and return its agent_id."""
-    file_search = FileSearchTool(vector_store_ids=[vector_store_id])
-
-    agent_def = PromptAgentDefinition(
-        model="gpt-4.1-mini",
-        name="ask-my-docs",
-        description="Answers questions using uploaded documents with citations.",
+def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini"):
+    """Ask a question grounded in the vector store."""
+    response = openai.responses.create(
+        model=model,
+        input=question,
         instructions=(
-            "You are a helpful assistant that answers questions based solely on "
-            "the provided documents. Always cite the source file and, where possible, "
-            "the page number. If the answer isn't in the documents, say so — "
-            "do not guess."
+            "Answer only using the provided documents. "
+            "Always cite the source file and section. "
+            "If the answer is not in the documents, say so — do not guess."
         ),
-        tools=[file_search.definitions],
-        tool_resources=file_search.resources,
+        tools=[{
+            "type": "file_search",
+            "vector_store_ids": [vector_store_id],
+        }],
+        include=["file_search_call.results"],
     )
 
-    agent = client.agents.create_version(definition=agent_def)
-    print(f"Agent created: {agent.id}")
-    return agent.id
+    # Extract answer text and citations from output items
+    answer = ""
+    annotations = []
+    for item in response.output:
+        if hasattr(item, "type") and item.type == "message":
+            for block in item.content:
+                if hasattr(block, "text"):
+                    answer = block.text
+                if hasattr(block, "annotations"):
+                    annotations.extend(block.annotations)
+
+    print(f"💬 {answer}")
+    for ann in annotations:
+        if hasattr(ann, "file_citation"):
+            print(f"   ↳ Source: {ann.file_citation.file_id}")
+    return answer
 ```
 
-> **Model note:** GPT-4.1-mini is the right pick here — it's fast and cheap for Q&A. Switch to GPT-4.1 if you need deeper reasoning over complex technical docs.
+> **Model note:** GPT-4.1-mini is the right pick here — fast and cheap for Q&A. Switch to GPT-4.1 if you need deeper reasoning over complex technical docs.
 
-### Step 6 — Run a query
-
-```python
-from azure.ai.projects.models import MessageRole
-
-def ask(agent_id: str, question: str) -> str:
-    """Create a thread, post a message, run the agent, return the answer."""
-    thread = client.agents.create_thread()
-
-    client.agents.create_message(
-        thread_id=thread.id,
-        role=MessageRole.USER,
-        content=question
-    )
-
-    run = client.agents.create_and_process_run(
-        thread_id=thread.id,
-        agent_id=agent_id
-    )
-
-    if run.status != "completed":
-        raise RuntimeError(f"Run ended with status: {run.status}\n{run.last_error}")
-
-    messages = client.agents.list_messages(thread_id=thread.id)
-    last = messages.get_last_message_by_role(MessageRole.ASSISTANT)
-
-    # Print answer with citations
-    for block in last.content:
-        if hasattr(block, "text"):
-            print(block.text.value)
-            for ann in block.text.annotations:
-                if hasattr(ann, "file_citation"):
-                    print(f"  ↳ Source: {ann.file_citation.file_id}")
-    return last.content[0].text.value
-```
-
-### Step 7 — Wire it all together
+### Step 6 — Wire it all together
 
 ```python
 def main():
-    PDF_PATH = "your-document.pdf"       # change this
+    PDF_PATH = "your-document.pdf"    # ← change to your PDF
     STORE_NAME = "ask-my-docs-store"
 
-    vector_store_id = upload_pdf_and_create_vector_store(PDF_PATH, STORE_NAME)
-    agent_id = create_ask_my_docs_agent(vector_store_id)
+    uploaded = upload_pdf(PDF_PATH)
+    vs = create_vector_store(uploaded.id, STORE_NAME)
 
     questions = [
-        "What are the key SLA commitments in this document?",
-        "List any security requirements mentioned.",
-        "What are the escalation procedures?",
+        "What is the main subject of this document?",
+        "List any key requirements or commitments mentioned.",
+        "Are there any deadlines or dates referenced?",
     ]
 
+    print("\n" + "="*60)
     for q in questions:
         print(f"\n❓ {q}")
-        ask(agent_id, q)
+        ask(q, vs.id)
+
+    print(f"\nTo reuse: VECTOR_STORE_ID={vs.id}")
 
 if __name__ == "__main__":
     main()
 ```
+
+The complete, runnable version of this script is at `src/ask_my_docs.py` in this repo.
 
 ---
 
@@ -211,35 +206,49 @@ if __name__ == "__main__":
 Run the script against a PDF you know well so you can verify accuracy:
 
 ```bash
-python ask_my_docs.py
+# Copy .env.example → .env and set your endpoint
+cp .env.example .env
+# Edit .env with your FOUNDRY_PROJECT_ENDPOINT
+
+python src/ask_my_docs.py
 ```
 
 Expected output:
 
 ```
-Uploaded file: file-abc123
-Vector store ready: vs-xyz789  status=completed
-Agent created: agent-def456
+Uploading my-policy.pdf (142 KB)...
+  File ID: file-abc123  status=processed
+Creating vector store 'ask-my-docs-store'...
+  Vector store ID: vs-xyz789  status=in_progress
+  Waiting for indexing... status=in_progress
+  Indexing complete. Chunks: 1
 
-❓ What are the key SLA commitments?
-The document specifies a 99.9% uptime SLA for the production environment [1], with
-a 4-hour RTO and 1-hour RPO for critical systems [2].
-  ↳ Source: file-abc123
+============================================================
+
+❓ What is the main subject of this document?
+💬 The document covers the company's remote work policy, including eligibility
+criteria, equipment provisions, and security requirements for employees working
+outside the office.
+   ↳ Source: file-abc123
+
+❓ List any key requirements or commitments mentioned.
+💬 Key requirements include: VPN usage for all remote sessions, encrypted
+laptop storage, and manager approval for remote work schedules exceeding
+3 days per week.
+   ↳ Source: file-abc123
 ```
 
-**Verify citations are accurate:** Open the PDF and confirm the cited content actually says what the agent claims. If citations are wrong, check that the PDF isn't a scanned image — Document Intelligence preprocessing (Guide 05) may be needed.
+**Verify citations are accurate:** Open the PDF and confirm the cited content actually says what the agent claims. If citations are wrong or missing, check that the PDF isn't a scanned image — Document Intelligence preprocessing (Guide 05) may be needed.
 
 **Add a second document:**
 
 ```python
-uploaded2 = client.agents.upload_file_and_poll(
-    file=pathlib.Path("second-doc.pdf").read_bytes(),
-    filename="second-doc.pdf",
-    purpose="assistants"
-)
+with open("second-doc.pdf", "rb") as f:
+    uploaded2 = openai.files.create(file=f, purpose="assistants")
+
 # Add to existing vector store
-client.agents.create_vector_store_file(
-    vector_store_id=vector_store_id,
+openai.vector_stores.files.create(
+    vector_store_id=vs.id,
     file_id=uploaded2.id
 )
 ```
