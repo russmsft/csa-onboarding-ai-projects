@@ -8,10 +8,13 @@ Usage:
   3. Run: python ask_my_docs.py
 
 Authentication: uses DefaultAzureCredential (az login / managed identity).
+Results are saved to outputs/results_<timestamp>.md automatically.
 """
+import json
 import os
 import pathlib
 import time
+from datetime import datetime, timezone
 from dotenv import load_dotenv
 from azure.identity import DefaultAzureCredential, get_bearer_token_provider
 from openai import AzureOpenAI
@@ -106,12 +109,56 @@ def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini") -> str
     return answer, annotations
 
 
+def save_results(doc_name: str, vector_store_id: str, results: list[dict], output_dir: pathlib.Path):
+    """Save Q&A results to a markdown file and a JSON file in output_dir."""
+    output_dir.mkdir(parents=True, exist_ok=True)
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+    stem = f"results_{timestamp}"
+
+    # Markdown report
+    md_path = output_dir / f"{stem}.md"
+    lines = [
+        f"# Ask My Docs — Results",
+        f"",
+        f"**Document:** {doc_name}  ",
+        f"**Vector store:** `{vector_store_id}`  ",
+        f"**Run at:** {datetime.now(timezone.utc).isoformat()}",
+        f"",
+        "---",
+        "",
+    ]
+    for r in results:
+        lines.append(f"### ❓ {r['question']}")
+        lines.append(f"")
+        lines.append(f"{r['answer']}")
+        lines.append(f"")
+        for src in r.get("sources", []):
+            lines.append(f"*↳ Source: `{src}`*  ")
+        lines.append("")
+        lines.append("---")
+        lines.append("")
+    md_path.write_text("\n".join(lines), encoding="utf-8")
+
+    # JSON for programmatic use
+    json_path = output_dir / f"{stem}.json"
+    json_path.write_text(
+        json.dumps({"document": doc_name, "vector_store_id": vector_store_id, "results": results}, indent=2),
+        encoding="utf-8",
+    )
+
+    print(f"\n📄 Results saved:")
+    print(f"   Markdown: {md_path}")
+    print(f"   JSON:     {json_path}")
+    return md_path, json_path
+
+
 def main():
     # Resolve sample.txt relative to the repo root (one level above src/)
     _REPO_ROOT = pathlib.Path(__file__).parent.parent
     PDF_PATH = str(_REPO_ROOT / "sample.txt")   # ← change to your PDF or .txt document
     STORE_NAME = "ask-my-docs-store"
     MODEL = "gpt-4.1-mini"
+    OUTPUT_DIR = _REPO_ROOT / "outputs"
 
     # Step 1: upload
     uploaded = upload_pdf(PDF_PATH)
@@ -127,16 +174,28 @@ def main():
     ]
 
     print("\n" + "="*60)
+    results = []
     for q in questions:
         print(f"\n❓ {q}")
         answer, annotations = ask(q, vs.id, MODEL)
         print(f"💬 {answer}")
+        sources = []
         for ann in annotations:
             if hasattr(ann, "file_citation"):
                 print(f"   ↳ Source: {ann.file_citation.file_id}")
+                sources.append(ann.file_citation.file_id)
+        results.append({"question": q, "answer": answer, "sources": sources})
 
     print("\n" + "="*60)
     print("Done. To reuse this vector store, set VECTOR_STORE_ID=" + vs.id)
+
+    # Step 4: save results
+    save_results(
+        doc_name=pathlib.Path(PDF_PATH).name,
+        vector_store_id=vs.id,
+        results=results,
+        output_dir=OUTPUT_DIR,
+    )
 
 
 if __name__ == "__main__":
