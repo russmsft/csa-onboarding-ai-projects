@@ -14,7 +14,15 @@ This is the fastest path to production RAG — no embeddings code, no external v
 
 ## Prerequisites
 
-- Azure subscription with an Azure AI Services (Foundry) resource — `csa-onboarding-foundry` was provisioned for you
+- Azure subscription with an Azure AI Services resource deployed (kind: `AIServices`, SKU: `S0`). Create one in the [Azure Portal](https://portal.azure.com) under **Azure AI Services**, or via CLI:
+  ```bash
+  az cognitiveservices account create \
+    --name <your-resource-name> \
+    --resource-group <your-rg> \
+    --kind AIServices \
+    --sku S0 \
+    --location eastus
+  ```
 - Python 3.11+
 - `openai >= 1.30.0`, `azure-identity`, and `python-dotenv` installed
 - Azure CLI logged in (`az login`) with Cognitive Services User on the resource
