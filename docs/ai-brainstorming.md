@@ -19,20 +19,20 @@ That's what these 12 ideas are. Some are personal demo assets — things you bui
 
 ## At a Glance
 
-| # | Idea | Type | Effort |
-|---|------|------|--------|
-| 1 | Ask My Docs — RAG Starter | Demo asset | 1-2 days |
-| 2 | Meeting Minutes Agent | Demo asset | 2-3 days |
-| 3 | Customer Email Triage Agent | Co-build | ~1 week |
-| 4 | Internal Policy Chatbot | Co-build | ~1 week |
-| 5 | Contract Clause Analyzer | Co-build | ~2 weeks |
-| 6 | Multi-Agent Incident Responder | Demo asset | ~2 weeks |
-| 7 | Data Pipeline QA Agent | Co-build | 2-3 weeks |
-| 8 | Voice-Enabled Field Assistant | Demo asset | 2-3 weeks |
-| 9 | Competitive Intelligence Dashboard | Co-build | 3-4 weeks |
-| 10 | Agentic Workflow for Approvals | Co-build | 4-6 weeks |
-| 11 | Computer-Use Process Automator | Demo asset | 4-6 weeks |
-| 12 | Multi-Modal Quality Inspector | Co-build | 6-8 weeks |
+| # | Idea | Type | Impact | Difficulty | Effort |
+|---|------|------|--------|------------|--------|
+| 1 | Ask My Docs — RAG Starter | Demo asset | ⭐⭐⭐⭐ | ⭐⭐ | 1-2 days |
+| 2 | Meeting Minutes Agent | Demo asset | ⭐⭐⭐⭐ | ⭐⭐ | 2-3 days |
+| 3 | Customer Email Triage Agent | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐ | ~1 week |
+| 4 | Internal Policy Chatbot | Co-build | ⭐⭐⭐⭐ | ⭐⭐ | ~1 week |
+| 5 | Contract Clause Analyzer | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ~2 weeks |
+| 6 | Multi-Agent Incident Responder | Demo asset | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ~2 weeks |
+| 7 | Data Pipeline QA Agent | Co-build | ⭐⭐⭐⭐ | ⭐⭐⭐ | 2-3 weeks |
+| 8 | Voice-Enabled Field Assistant | Demo asset | ⭐⭐⭐⭐ | ⭐⭐⭐ | 2-3 weeks |
+| 9 | Competitive Intelligence Dashboard | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 3-4 weeks |
+| 10 | Agentic Workflow for Approvals | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 4-6 weeks |
+| 11 | Computer-Use Process Automator | Demo asset | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 4-6 weeks |
+| 12 | Multi-Modal Quality Inspector | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 6-8 weeks |
 
 They're ordered roughly by difficulty. Start at the top.
 
