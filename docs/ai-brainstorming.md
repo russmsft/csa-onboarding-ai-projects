@@ -1,395 +1,318 @@
-# AI Project Ideas for New CSA Starters — Microsoft CSU Cloud & AI
+# 12 AI Projects to Get You Dangerous — CSU Cloud & AI Onboarding
 
-**Audience:** New Cloud Solution Architects with solid cloud/dev backgrounds, new to AI  
-**Purpose:** Ramp-up projects + customer-ready templates  
-**Platform:** Microsoft Foundry (current as of May 2026)  
-**Models referenced:** GPT-5.5, GPT-5.4 series, GPT-4.1 series, o-series reasoning models
-
----
-
-## The Big Picture
-
-You just joined CSU. You need two things fast: hands-on confidence with the Azure AI stack, and something to show customers in your first meetings. These 12 ideas are designed to give you both.
-
-Some are personal demo assets — things you build once and bring into every conversation. Others are co-build templates you adapt to a customer's data and deploy alongside them in a POC sprint. The phased roadmap at the bottom tells you what to tackle first.
-
-Every idea runs on Microsoft Foundry. Not standalone Azure OpenAI resources. Not third-party platforms. Foundry is where model access, agent hosting, and application development live now — and it's what you'll be recommending to customers.
+**Who this is for:** You just joined CSU as a Cloud Solution Architect. You know cloud. You don't know AI yet.  
+**What this gives you:** Ramp-up projects that double as customer-ready demos.  
+**Platform:** Microsoft Foundry — everything here runs on it. Not standalone Azure OpenAI. Not third-party. Foundry.  
+**Models:** GPT-5.5, GPT-5.4 series, GPT-4.1 series, o-series reasoning models
 
 ---
 
-## Quick Reference: Ideas at a Glance
+## Why You Should Care
 
-| # | Idea | Type | Impact | Difficulty | Time to First Value |
-|---|------|------|--------|------------|---------------------|
-| 1 | Ask My Docs — RAG Starter | Demo asset | ⭐⭐⭐⭐ | ⭐⭐ | 1-2 days |
-| 2 | Meeting Minutes Agent | Demo asset | ⭐⭐⭐⭐ | ⭐⭐ | 2-3 days |
-| 3 | Customer Email Triage Agent | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐ | 1 week |
-| 4 | Internal Policy Chatbot | Co-build | ⭐⭐⭐⭐ | ⭐⭐ | 1 week |
-| 5 | Contract Clause Analyzer | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | 2 weeks |
-| 6 | Multi-Agent Incident Responder | Demo asset | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | 2 weeks |
-| 7 | Data Pipeline QA Agent | Co-build | ⭐⭐⭐⭐ | ⭐⭐⭐ | 2-3 weeks |
-| 8 | Voice-Enabled Field Assistant | Demo asset | ⭐⭐⭐⭐ | ⭐⭐⭐ | 2-3 weeks |
-| 9 | Competitive Intelligence Dashboard | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 3-4 weeks |
-| 10 | Agentic Workflow for Approvals | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 4-6 weeks |
-| 11 | Computer-Use Process Automator | Demo asset | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 4-6 weeks |
-| 12 | Multi-Modal Quality Inspector | Co-build | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 6-8 weeks |
+You need two things in your first 90 days: confidence that you can actually build with the AI stack, and something real to show a customer who's sitting across the table asking "so what can this do?"
+
+Slides won't get you there. A working demo will.
+
+That's what these 12 ideas are. Some are personal demo assets — things you build once and pull up in every meeting. Others are co-build templates you clone, swap in a customer's data, and deploy in a POC sprint. The roadmap at the bottom tells you what order to tackle them.
 
 ---
 
-## Idea 1: Ask My Docs — RAG Starter Kit
+## At a Glance
 
-**Type:** Demo asset (reusable across every customer conversation)  
-**Impact:** ⭐⭐⭐⭐ | **Difficulty:** ⭐⭐ | **Time to value:** 1-2 days
+| # | Idea | Type | Effort |
+|---|------|------|--------|
+| 1 | Ask My Docs — RAG Starter | Demo asset | 1-2 days |
+| 2 | Meeting Minutes Agent | Demo asset | 2-3 days |
+| 3 | Customer Email Triage Agent | Co-build | ~1 week |
+| 4 | Internal Policy Chatbot | Co-build | ~1 week |
+| 5 | Contract Clause Analyzer | Co-build | ~2 weeks |
+| 6 | Multi-Agent Incident Responder | Demo asset | ~2 weeks |
+| 7 | Data Pipeline QA Agent | Co-build | 2-3 weeks |
+| 8 | Voice-Enabled Field Assistant | Demo asset | 2-3 weeks |
+| 9 | Competitive Intelligence Dashboard | Co-build | 3-4 weeks |
+| 10 | Agentic Workflow for Approvals | Co-build | 4-6 weeks |
+| 11 | Computer-Use Process Automator | Demo asset | 4-6 weeks |
+| 12 | Multi-Modal Quality Inspector | Co-build | 6-8 weeks |
 
-**What it is:** A prompt agent in Foundry Agent Service with File Search enabled against a small document set. Upload 10-20 PDFs (public Azure docs, a customer's annual report, whatever fits the meeting), and you've got a grounded chatbot that answers questions with citations.
-
-**Why this is your first build:** Every customer asks "can AI search our documents?" This is the answer. Having a working demo running in Foundry — not a slide deck about RAG — changes the energy of the room.
-
-**Business case:** Reduces time-to-answer for knowledge workers from hours of searching to seconds, with source attribution.
-
-**Azure services:**
-- Microsoft Foundry (project + prompt agent)
-- Foundry Agent Service with File Search tool
-- GPT-4.1-mini (cost-efficient, fast) or GPT-5.4-mini for better reasoning
-- Azure Blob Storage for document ingestion
-
-**What you'll learn:** Foundry project setup, agent creation, File Search tool, document chunking behavior, grounding quality tuning.
-
-**Stretch:** Swap File Search for Azure AI Search with custom chunking + text-embedding-3-large vectors. Now you understand the full RAG stack.
+They're ordered roughly by difficulty. Start at the top.
 
 ---
 
-## Idea 2: Meeting Minutes Agent
+## 1. Ask My Docs — RAG Starter Kit
 
-**Type:** Demo asset  
-**Impact:** ⭐⭐⭐⭐ | **Difficulty:** ⭐⭐ | **Time to value:** 2-3 days
+**Demo asset · 1-2 days**
 
-**What it is:** Record a Teams meeting (or use a sample audio file). Feed it through Foundry audio models for transcription, then hand the transcript to a prompt agent that extracts action items, decisions, and a summary. Output goes to a structured markdown or JSON doc.
+Every customer you'll ever meet will ask some version of the same question: "Can AI search our documents?" This is your answer. Not a slide about RAG — a working demo you pull up on your laptop.
 
-**Why it matters:** This is the "oh, I actually want that" demo. Everyone sits in too many meetings. When a CSA shows this working live — transcribe, summarize, extract — it clicks immediately.
+Set up a prompt agent in Foundry Agent Service, enable File Search, upload 10-20 PDFs (Azure docs, a customer's annual report, whatever fits the meeting). Now you've got a grounded chatbot that answers questions and shows where it found the answer.
 
-**Business case:** Knowledge workers spend 5+ hours per week on meeting follow-ups. Automating notes and action extraction reclaims that time.
+**You'll use:** Foundry project + prompt agent, File Search tool, GPT-4.1-mini (fast and cheap) or GPT-5.4-mini (better reasoning), Azure Blob Storage.
 
-**Azure services:**
-- Microsoft Foundry
-- GPT-4o audio / Whisper for transcription
-- GPT-4.1-mini for summarization agent
-- Foundry Agent Service (prompt agent)
-- Azure Functions (timer trigger for batch processing, optional)
+**What you'll actually learn:** How Foundry projects work, how agents get created, how File Search chunks documents under the hood, and why grounding quality varies depending on your docs.
 
-**What you'll learn:** Audio model APIs, prompt engineering for structured extraction, chaining model outputs.
+**Once that's working:** Swap out File Search for Azure AI Search with custom chunking and text-embedding-3-large vectors. That's the jump from "managed RAG" to "I understand the full stack." Worth doing before your first customer meeting.
 
 ---
 
-## Idea 3: Customer Email Triage Agent
+## 2. Meeting Minutes Agent
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐⭐ | **Difficulty:** ⭐⭐ | **Time to value:** 1 week
+**Demo asset · 2-3 days**
 
-**What it is:** An agent that reads incoming customer emails (or support tickets from a queue), classifies them by urgency and topic, drafts a response, and routes them to the right team. The agent uses function calling to hit the customer's ticketing API and a knowledge base for response templates.
+This is the demo where people lean forward and say "wait, I actually want that."
 
-**Why customers care:** Every company with a support inbox is drowning. Classification accuracy above 90% with sub-second latency? That's a staffing conversation.
+Record a Teams meeting (or grab a sample audio file). Run it through Foundry audio models for transcription. Hand the transcript to a prompt agent that pulls out action items, decisions, and a summary. Output: structured markdown or JSON.
 
-**Business case:** Cuts first-response time from hours to minutes. Reduces misrouted tickets by 70-80%, based on typical classification accuracy with GPT-4.1-mini on domain-specific categories.
+Everyone sits in too many meetings. Everyone hates writing up the notes. When you show this working live — audio in, structured notes out — it clicks instantly.
 
-**Azure services:**
-- Microsoft Foundry (prompt agent with function calling)
-- GPT-4.1-mini (fast classification) + GPT-5.4-mini (draft generation)
-- Azure Service Bus (email queue ingestion)
-- Azure AI Search + Foundry IQ (knowledge base for response templates)
-- Azure Cosmos DB (ticket state and routing history)
+**You'll use:** Foundry, GPT-4o audio or Whisper (transcription), GPT-4.1-mini (summarization agent), Foundry Agent Service. Optional: Azure Functions with a timer trigger if you want batch processing.
 
-**What you'll learn:** Function calling, multi-model routing (cheap model for classification, better model for generation), queue-based architectures.
+**The real lesson here:** How to chain model outputs (audio model → text model), and how to write prompts that extract structured data reliably. You'll also discover that prompt engineering for extraction is a different beast than prompt engineering for chat.
 
 ---
 
-## Idea 4: Internal Policy Chatbot
+## 3. Customer Email Triage Agent
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐ | **Difficulty:** ⭐⭐ | **Time to value:** 1 week
+**Co-build template · ~1 week**
 
-**What it is:** Foundry IQ pointed at a customer's HR policies, IT guidelines, or compliance documentation. Employees ask "how many vacation days do I have left?" or "what's the approval process for a laptop?" and get grounded, cited answers instead of searching a 200-page PDF.
+Every company with a support inbox is drowning. They know it. You know it.
 
-This is different from Idea 1 because it uses Foundry IQ — the turnkey RAG option that requires zero chunking/embedding pipeline work. You bring the documents, Foundry handles the rest.
+Build an agent that reads incoming emails or support tickets from a queue, classifies them by urgency and topic, drafts a response, and routes to the right team. The agent uses function calling to hit the customer's ticketing API and pulls response templates from a knowledge base.
 
-**Business case:** HR and IT helpdesks handle thousands of "where do I find..." questions monthly. Deflecting 40-60% to a self-service agent saves real headcount.
+The trick here is multi-model routing: GPT-4.1-mini for classification (fast, cheap, accurate enough), GPT-5.4-mini for drafting the actual response (needs to sound good). Don't use an expensive model for a classification task. Don't use a cheap model to write customer-facing text. Match the model to the job.
 
-**Azure services:**
-- Microsoft Foundry with Foundry IQ
-- GPT-4.1-mini (handles policy Q&A well at low cost)
-- Microsoft Entra ID (authentication — employees only)
-- Azure App Service (chat UI frontend)
+**You'll use:** Foundry (prompt agent with function calling), GPT-4.1-mini + GPT-5.4-mini, Azure Service Bus (queue ingestion), Azure AI Search + Foundry IQ (response templates), Azure Cosmos DB (ticket state and routing history).
 
-**What you'll learn:** Foundry IQ setup, enterprise auth integration, when to use Foundry IQ vs. building your own RAG pipeline. Spoiler: start with IQ, graduate to custom when you need control over chunking.
+**Why this works as a co-build:** Almost every customer has this problem, regardless of industry. First-response times go from hours to minutes. Misrouted tickets drop dramatically once you've tuned the classification categories to their domain. This is one of the easiest POCs to propose because the ROI is so visible.
 
 ---
 
-## Idea 5: Contract Clause Analyzer
+## 4. Internal Policy Chatbot
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐ | **Time to value:** 2 weeks
+**Co-build template · ~1 week**
 
-**What it is:** Upload a contract (PDF or Word). An agent with Code Interpreter extracts clauses, flags risky language against a configurable ruleset, and generates a risk summary with clause-by-clause annotations. Think "redline review assistant" — not replacing lawyers, but cutting their review time in half.
+"How many vacation days do I have left?" "What's the approval process for a new laptop?" "Can I expense this?"
 
-**Why this one punches above its weight:** Legal review is expensive. $500/hour expensive. Showing a demo that correctly flags an indemnification clause with unusual liability caps gets attention from the C-suite, not just IT.
+HR and IT helpdesks field thousands of these every month. The answers are all in a 200-page PDF somewhere. Nobody reads the PDF.
 
-**Business case:** Legal teams spend 60% of contract review time on standard clause identification. Automation cuts review time by 40-50% on routine agreements.
+This one uses Foundry IQ — the turnkey RAG option that handles chunking and embedding for you. You bring the documents, Foundry does the rest. Point it at a customer's HR policies, IT guidelines, or compliance docs, and employees get cited answers instead of "please refer to section 4.2.1 of the employee handbook."
 
-**Azure services:**
-- Microsoft Foundry (prompt agent with Code Interpreter)
-- GPT-5.4 (needs the larger context window — contracts are long, and you want the full document in context)
-- Azure AI Document Intelligence (PDF/image extraction for scanned contracts)
-- Azure Blob Storage (contract repository)
-- Azure Cosmos DB (clause library and risk rules)
+The difference between this and Idea 1: Idea 1 teaches you how RAG works under the hood. This one teaches you when to skip all that and use the managed option. (Spoiler: start with Foundry IQ. Graduate to custom RAG when you need control over chunking.)
 
-**What you'll learn:** Code Interpreter for document parsing, long-context prompt design, structured output with confidence scoring. Also: how to talk to legal teams about AI without scaring them.
+**You'll use:** Foundry with Foundry IQ, GPT-4.1-mini (handles policy Q&A well at low cost), Microsoft Entra ID (employees only — you need auth), Azure App Service (chat UI).
+
+**The skill you're building:** Knowing when the managed path is the right call. Customers love hearing "you don't need to build a pipeline for this." It saves them months.
 
 ---
 
-## Idea 6: Multi-Agent Incident Responder
+## 5. Contract Clause Analyzer
 
-**Type:** Demo asset  
-**Impact:** ⭐⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐ | **Time to value:** 2 weeks
+**Co-build template · ~2 weeks**
 
-**What it is:** Three agents working together to handle a production incident. Agent 1 (Diagnostician) reads logs and metrics from Application Insights. Agent 2 (Researcher) searches runbooks and past incident reports. Agent 3 (Communicator) drafts stakeholder updates. Orchestrated as a workflow agent in Foundry.
+Legal review runs at $500/hour. That's not a metaphor. That's the invoice.
 
-This is your "wow" demo for platform engineering and DevOps conversations. Most customers have heard about multi-agent systems. Almost none have seen one running.
+Build an agent with Code Interpreter that takes a contract (PDF or Word), extracts clauses, flags risky language against a configurable ruleset, and spits out a risk summary with clause-by-clause annotations. Think "redline review assistant" — not replacing lawyers, but cutting the time they spend on routine clause identification in half.
 
-**Business case:** Mean time to resolution (MTTR) for P1 incidents drops when the initial diagnosis and communication happen in parallel instead of sequentially. We're talking 30-40% reduction for well-instrumented systems.
+Here's why this one opens doors: when you demo an agent that correctly flags an indemnification clause with unusual liability caps, you get attention from the CFO and General Counsel — not just IT. Legal teams spend the majority of their contract review time on standard clause identification. That's the work this automates.
 
-**Azure services:**
-- Microsoft Foundry (workflow agent orchestrating 3 prompt agents)
-- Foundry Agent Service (managed hosting + orchestration)
-- GPT-5.4-mini (fast reasoning for log analysis)
-- Azure Monitor / Application Insights (data source via MCP or function calling)
-- Azure AI Search (runbook and incident history index)
-- Microsoft Agent Framework (if you want code-level control over the orchestration)
+**You'll use:** Foundry (prompt agent with Code Interpreter), GPT-5.4 (contracts are long — you want the full document in the 1M token context window, not chunked), Azure AI Document Intelligence (for scanned contract PDFs), Blob Storage (contract repo), Cosmos DB (clause library and risk rules).
 
-**What you'll learn:** Multi-agent orchestration patterns (specifically the concurrent fan-out pattern), workflow agents in Foundry, connecting agents to live Azure data sources. This is the project where the Agent Framework SDK starts making sense.
+**What makes this hard:** Long-context prompt design is its own discipline. You'll learn to write prompts that keep the model focused across a 40-page document. You'll also learn structured output with confidence scoring — and how to talk to legal teams about AI without terrifying them.
 
 ---
 
-## Idea 7: Data Pipeline QA Agent
+## 6. Multi-Agent Incident Responder
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐ | **Time to value:** 2-3 weeks
+**Demo asset · ~2 weeks**
 
-**What it is:** An agent that monitors data pipelines (Azure Data Factory, Synapse, Fabric) and does automated quality checks. When a pipeline run completes, the agent inspects output data for anomalies — null spikes, schema drift, distribution shifts — and either auto-remediates or alerts the data team with a diagnosis.
+This is your "I didn't know you could do that" demo. Most customers have heard the phrase "multi-agent systems." Almost none have seen one running.
 
-**Why data teams love this:** Nobody wants to be the person who discovers bad data in a dashboard two days after the pipeline broke. This agent catches it within minutes.
+Three agents, one production incident:
 
-**Business case:** Data quality issues cost enterprises an average of $12.9M per year (Gartner). Catching anomalies within minutes vs. days prevents downstream decision errors.
+- **Agent 1 (Diagnostician)** reads logs and metrics from Application Insights
+- **Agent 2 (Researcher)** searches runbooks and past incident reports
+- **Agent 3 (Communicator)** drafts stakeholder updates
 
-**Azure services:**
-- Microsoft Foundry (prompt agent with Code Interpreter for statistical analysis)
-- GPT-4.1-mini (anomaly description) + codex-mini (code generation for remediation scripts)
-- Azure Functions (Cosmos DB change feed trigger or Event Grid trigger from pipeline completion)
-- Azure Cosmos DB (pipeline run metadata and quality scores)
-- Azure Data Factory / Microsoft Fabric (pipeline integration)
+All three work concurrently, orchestrated as a workflow agent in Foundry. The insight here: MTTR drops when diagnosis and communication happen in parallel instead of one person doing everything sequentially.
 
-**What you'll learn:** Event-driven agent triggering, Code Interpreter for data analysis, reasoning model selection (codex-mini for code generation tasks).
+**You'll use:** Foundry (workflow agent orchestrating 3 prompt agents), Foundry Agent Service, GPT-5.4-mini (fast reasoning for log analysis), Azure Monitor / Application Insights (data source via MCP or function calling), Azure AI Search (runbook and incident history index). If you want code-level control over orchestration: Microsoft Agent Framework.
+
+**This is the project where multi-agent orchestration stops being abstract.** You'll implement the concurrent fan-out pattern, connect agents to live Azure data sources, and — most importantly — start understanding when the Agent Framework SDK is the right tool vs. when Foundry's built-in orchestration is enough. Save this demo for platform engineering and DevOps conversations.
 
 ---
 
-## Idea 8: Voice-Enabled Field Assistant
+## 7. Data Pipeline QA Agent
 
-**Type:** Demo asset  
-**Impact:** ⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐ | **Time to value:** 2-3 weeks
+**Co-build template · 2-3 weeks**
 
-**What it is:** A mobile-friendly web app where field technicians speak their question — "what's the torque spec for the Model 7200 compressor valve?" — and get a spoken answer grounded in equipment manuals. Hands-free, eyes-free. Built on GPT-4o Realtime for low-latency voice interaction.
+Nobody wants to be the person who finds bad data in a dashboard two days after the pipeline broke. And yet.
 
-**Why it lands:** Manufacturing and energy customers light up when they see voice interaction with their own technical docs. Their field workers can't scroll through PDFs while holding a wrench.
+Build an agent that monitors data pipelines (Data Factory, Synapse, Fabric) and runs automated quality checks when a pipeline completes. It inspects output data for null spikes, schema drift, distribution shifts — and either auto-remediates or pings the data team with a diagnosis.
 
-**Business case:** Field service calls where technicians need remote expert support cost $150-300 per call. A voice assistant that answers 60% of those questions from documentation saves six figures annually for mid-size operations.
+The interesting design decision: use GPT-4.1-mini for describing anomalies (it's fast and the descriptions don't need to be creative), but use codex-mini for generating remediation scripts (it's optimized for code). This is multi-model routing again — same pattern as Idea 3, different context.
 
-**Azure services:**
-- Microsoft Foundry
-- GPT-4o Realtime (speech-in, speech-out with low latency)
-- Azure AI Search (equipment manual index with text-embedding-3-large)
-- Azure Container Apps (backend API)
-- Azure App Service (mobile-optimized frontend)
-- Azure Blob Storage (manual PDFs + images)
+**You'll use:** Foundry (prompt agent with Code Interpreter for stats), GPT-4.1-mini + codex-mini, Azure Functions (triggered by Cosmos DB change feed or Event Grid on pipeline completion), Cosmos DB (run metadata and quality scores), Data Factory or Microsoft Fabric.
 
-**What you'll learn:** Realtime audio APIs, voice UX design, mobile-first architecture. Good conversation starter for manufacturing, energy, and logistics customers.
+**What makes this one sticky for customers:** Data quality issues are expensive. Not in a hand-wavy way — Gartner puts the average cost at $12.9M/year for enterprises. Catching anomalies in minutes instead of days prevents real downstream damage. Data platform teams tend to get excited about this one fast.
 
 ---
 
-## Idea 9: Competitive Intelligence Dashboard
+## 8. Voice-Enabled Field Assistant
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐⭐ | **Time to value:** 3-4 weeks
+**Demo asset · 2-3 weeks**
 
-**What it is:** An agent that continuously monitors competitor websites, news feeds, SEC filings, and social media. It summarizes changes, identifies trends, and updates a dashboard. Marketing and strategy teams get a daily digest instead of manually scanning 15 sources.
+"What's the torque spec for the Model 7200 compressor valve?"
 
-The agent uses Bing Web Search grounding for real-time data and Code Interpreter to generate charts and trend analysis.
+Imagine asking that out loud — hands full, standing next to the equipment — and getting a spoken answer grounded in the actual equipment manual. That's this project.
 
-**Business case:** Strategy teams spend 15-20 hours per week on manual competitive monitoring. Automating collection and initial analysis frees them to focus on interpretation and response.
+It's a mobile-friendly web app built on GPT-4o Realtime for low-latency voice. Speech in, speech out. Field technicians don't have free hands to scroll through PDFs. Manufacturing and energy customers light up when they see their own technical docs answering voice queries.
 
-**Azure services:**
-- Microsoft Foundry (prompt agent with Web Search + Code Interpreter)
-- GPT-5.4 (strong reasoning for trend synthesis across disparate sources)
-- Foundry Agent Service (scheduled runs via API)
-- Azure Cosmos DB (competitor intelligence history)
-- Azure Container Apps (dashboard API)
-- Azure Static Web Apps (dashboard frontend)
-- Azure Functions (scheduled trigger for daily/weekly runs)
+A quick back-of-napkin number: field service calls where techs need remote expert support run $150-300 each. If a voice assistant handles even half of those from documentation alone, you're looking at six-figure annual savings for a mid-size operation.
 
-**What you'll learn:** Web grounding, scheduled agent execution, building reporting layers on top of agent outputs.
+**You'll use:** Foundry, GPT-4o Realtime, Azure AI Search (equipment manual index with text-embedding-3-large), Azure Container Apps (backend), App Service (mobile-optimized frontend), Blob Storage (manual PDFs and images).
+
+**Bring this one to:** Manufacturing conversations. Energy. Logistics. Any customer with field workers and thick equipment manuals.
 
 ---
 
-## Idea 10: Agentic Workflow for Approvals
+## 9. Competitive Intelligence Dashboard
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐⭐ | **Time to value:** 4-6 weeks
+**Co-build template · 3-4 weeks**
 
-**What it is:** A workflow agent that handles multi-step business approvals — purchase requests, access provisioning, change management tickets. The agent reads the request, checks it against policies (using Foundry IQ), routes to the right approver, follows up on stale approvals, and logs everything. Human-in-the-loop at the approval step — the agent prepares, the human decides.
+Strategy teams spend 15-20 hours a week manually scanning competitor websites, news feeds, SEC filings, and social media. They know it's a waste. They keep doing it because nobody's automated the alternative.
 
-This is the project that teaches you why workflow agents exist. Some things shouldn't be fully autonomous.
+This agent does. It monitors those sources continuously, summarizes changes, spots trends, and feeds a dashboard. Marketing and strategy get a daily digest instead of 15 browser tabs.
 
-**Business case:** Approval bottlenecks slow down procurement by an average of 3-5 days. Automated preparation, routing, and follow-up cuts cycle time by 50-70%.
+The agent uses Bing Web Search grounding for real-time data and Code Interpreter to generate charts and trend analysis. You schedule it to run daily or weekly via Foundry Agent Service's API.
 
-**Azure services:**
-- Microsoft Foundry (workflow agent with branching logic and human-in-the-loop)
-- Foundry Agent Service (hosting + state management)
-- GPT-4.1-mini (fast policy checking)
-- Foundry IQ (policy knowledge base)
-- Azure Service Bus (request ingestion)
-- Azure Cosmos DB (approval state, audit trail)
-- Microsoft Graph API (Teams notifications for approvers)
-- Microsoft Entra ID (identity and RBAC)
+**You'll use:** Foundry (prompt agent with Web Search + Code Interpreter), GPT-5.4 (strong reasoning for synthesizing across disparate sources), Foundry Agent Service (scheduled runs), Cosmos DB (intelligence history), Container Apps (dashboard API), Static Web Apps (frontend), Azure Functions (scheduled trigger).
 
-**What you'll learn:** Workflow agent design, human-in-the-loop patterns, state management across long-running processes, Microsoft Graph integration. This is enterprise AI — messy, stateful, and high-value.
+**What's new here vs. earlier projects:** Web grounding (pulling live data from the internet, not just internal docs), scheduled agent execution (agents that run on a clock, not on demand), and building a reporting layer on top of agent outputs. This is where you learn to make agents do ongoing work, not just answer one-off questions.
 
 ---
 
-## Idea 11: Computer-Use Process Automator
+## 10. Agentic Workflow for Approvals
 
-**Type:** Demo asset  
-**Impact:** ⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐⭐ | **Time to value:** 4-6 weeks
+**Co-build template · 4-6 weeks**
 
-**What it is:** GPT-5.4 supports computer use — the model can see a screen, reason about UI elements, and take actions (click, type, scroll). Build an agent that automates a repetitive process in a legacy web application that has no API. Think: filling out forms in an old ERP system, exporting reports from a vendor portal, or data entry across two systems that don't talk to each other.
+Some things shouldn't be fully autonomous. This project teaches you why.
 
-**Why this turns heads:** Every enterprise has at least one terrible legacy app that someone spends hours clicking through daily. Showing a model that can see the screen and operate it? That's an "I didn't know AI could do that" moment.
+A workflow agent handles multi-step business approvals: purchase requests, access provisioning, change management tickets. The agent reads the request, checks it against policies (via Foundry IQ), routes to the right approver, follows up on stale approvals, and logs everything. But — and this is the design point — a human makes the actual decision. The agent prepares. The human approves.
 
-**Business case:** Manual data entry between disconnected systems costs 2-4 FTEs for mid-size companies. Even 50% automation of the simplest workflows saves $100K+ annually.
+Approval bottlenecks slow down procurement by days. Automated preparation, routing, and nagging cuts that cycle time dramatically. But the value here isn't just speed — it's the audit trail. Everything logged. Every step traceable.
 
-**Azure services:**
-- Microsoft Foundry
-- GPT-5.4 with computer-use capability (via Responses API)
-- Azure Container Apps (hosted agent runtime with browser automation)
-- Microsoft Agent Framework (code-level control over the computer-use loop)
-- Azure Key Vault (credentials for legacy system access)
+**You'll use:** Foundry (workflow agent with branching logic and human-in-the-loop), Foundry Agent Service (hosting + state management), GPT-4.1-mini (fast policy checking), Foundry IQ (policy knowledge base), Service Bus (request ingestion), Cosmos DB (approval state and audit trail), Microsoft Graph API (Teams notifications), Entra ID (identity and RBAC).
 
-**What you'll learn:** Computer-use API, Responses API (the new agent API replacing Assistants), building safety guardrails around autonomous UI interaction. Important: always demo with human-in-the-loop confirmation before actions.
+**This is enterprise AI.** Messy. Stateful. Long-running processes that span days. Human-in-the-loop patterns. Microsoft Graph integration for notifications. If you want to understand why workflow agents exist as a distinct concept from prompt agents, build this.
 
 ---
 
-## Idea 12: Multi-Modal Quality Inspector
+## 11. Computer-Use Process Automator
 
-**Type:** Co-build template  
-**Impact:** ⭐⭐⭐⭐⭐ | **Difficulty:** ⭐⭐⭐⭐⭐ | **Time to value:** 6-8 weeks
+**Demo asset · 4-6 weeks**
 
-**What it is:** A production line quality inspection system. Cameras capture product images, the agent analyzes them for defects using GPT-5.4 vision capabilities, cross-references against a defect catalog in Azure AI Search, and triggers alerts or line stops based on severity. Add Code Interpreter for statistical process control charts.
+Every enterprise has at least one terrible legacy app that someone spends hours clicking through daily. No API. No integration points. Just a web UI and a person copy-pasting between two systems.
 
-This is the most complex build on the list — but it's also the highest-value demo for manufacturing customers.
+GPT-5.4 can see a screen, reason about UI elements, and take actions — click, type, scroll. Build an agent that automates a repetitive process in a legacy web app: filling out ERP forms, exporting reports from a vendor portal, doing data entry across systems that don't talk to each other.
 
-**Business case:** Defective products that reach customers cost 5-10x more to address than catching them on the line. Automated visual inspection reduces defect escape rates by 30-50%.
+When you demo this, people say "I didn't know AI could do that." Then they immediately think of three processes they want to automate. That's the conversation you want.
 
-**Azure services:**
-- Microsoft Foundry (hosted agent with Microsoft Agent Framework)
-- GPT-5.4 (vision + reasoning for defect classification)
-- Azure AI Search (defect catalog with image embeddings)
-- Azure IoT Hub (camera feed ingestion)
-- Azure Container Apps (agent hosting)
-- Azure Cosmos DB (inspection history and SPC data)
-- Azure Event Hubs (real-time event streaming from production line)
-- Azure Monitor + Application Insights (agent observability)
+**You'll use:** Foundry, GPT-5.4 with computer-use capability (via Responses API), Container Apps (agent runtime with browser automation), Microsoft Agent Framework (code-level control over the computer-use loop), Azure Key Vault (credentials for legacy system access).
 
-**What you'll learn:** Multi-modal input handling, real-time processing architectures, IoT integration, hosted agents in Foundry. This is a portfolio piece.
+**Important:** Always demo with human-in-the-loop confirmation before the agent takes actions. An autonomous agent clicking through a production ERP system with no guardrails is a horror story, not a demo. The Responses API (the new agent API that replaced Assistants) gives you the control loop you need. Build the safety rails first, then the automation.
+
+---
+
+## 12. Multi-Modal Quality Inspector
+
+**Co-build template · 6-8 weeks**
+
+The hardest build on this list. Also the highest-value demo for manufacturing customers.
+
+Cameras on a production line capture product images. Your agent analyzes them for defects using GPT-5.4's vision capabilities, cross-references against a defect catalog in Azure AI Search, and triggers alerts or line stops based on severity. Add Code Interpreter for statistical process control charts.
+
+A defect that reaches a customer costs 5-10x more to address than catching it on the line. That math is what makes this project worth the complexity.
+
+**You'll use:** Foundry (hosted agent with Microsoft Agent Framework), GPT-5.4 (vision + reasoning), Azure AI Search (defect catalog with image embeddings), Azure IoT Hub (camera feed ingestion), Container Apps (agent hosting), Cosmos DB (inspection history and SPC data), Event Hubs (real-time event streaming), Azure Monitor + Application Insights (agent observability).
+
+**This is a portfolio piece.** Multi-modal input, real-time processing, IoT integration, hosted agents in Foundry — it touches everything. The architecture is complex because the problem is complex. Don't attempt this one until you've built at least 3-4 of the earlier ideas and have a real manufacturing customer to co-build with.
 
 ---
 
 ## Phased Roadmap
 
-### Phase 1: First 90 Days — Build Your Foundation
-
-**Goal:** Get hands-on with Foundry, deploy your first agents, have demos ready for customer meetings.
+### Phase 1: First 90 Days — Get Your Hands Dirty
 
 | Week | Build | Why |
 |------|-------|-----|
-| 1 | **Idea 1: Ask My Docs** | Foundry basics + RAG in a day. You'll reference this in every customer conversation. |
-| 2 | **Idea 2: Meeting Minutes Agent** | Audio models + prompt agents. Universally relatable demo. |
-| 3-4 | **Idea 4: Internal Policy Chatbot** | Foundry IQ (turnkey RAG). First co-build template you can adapt to any customer with internal docs. |
-| 5-6 | **Idea 3: Customer Email Triage** | Function calling + multi-model patterns. Strong cross-industry co-build. |
-| 7-10 | **Idea 6: Multi-Agent Incident Responder** | Your "wow" demo. Multi-agent orchestration, workflow agents. The project where everything clicks. |
-| 11-12 | Polish + customize | Take your best demos, swap in customer-relevant data, rehearse the storytelling. |
+| 1 | **Ask My Docs** | Foundry basics + RAG in a day. You'll reference this forever. |
+| 2 | **Meeting Minutes Agent** | Audio models + prompt agents. Everyone relates to this one. |
+| 3-4 | **Internal Policy Chatbot** | Foundry IQ. First co-build template you can adapt to any customer with internal docs. |
+| 5-6 | **Customer Email Triage** | Function calling + multi-model routing. Strong cross-industry co-build. |
+| 7-10 | **Multi-Agent Incident Responder** | Multi-agent orchestration. The project where everything clicks. |
+| 11-12 | Polish + customize | Swap in customer-relevant data. Rehearse the storytelling. |
 
-**You should have by day 90:** 4-5 working demos on your laptop, comfort with Foundry Agent Service, and the ability to spin up a customer POC in a week.
+**By day 90:** 4-5 working demos, comfort with Foundry Agent Service, ability to spin up a customer POC in a week.
 
-### Phase 2: Months 3-9 — Go Deeper, Co-Build with Customers
+### Phase 2: Months 3-9 — Co-Build with Real Customers
 
-**Goal:** Run your first customer POC engagements. Tackle harder problems.
+Pick 2-3 based on who you're actually working with:
 
-Pick 2-3 from this list based on the customers you're working with:
+- **Contract Clause Analyzer** — legal/procurement customers
+- **Data Pipeline QA Agent** — data platform customers
+- **Voice-Enabled Field Assistant** — manufacturing/field service
+- **Competitive Intelligence Dashboard** — marketing/strategy conversations
 
-- **Idea 5: Contract Clause Analyzer** — if you have legal/procurement customers
-- **Idea 7: Data Pipeline QA Agent** — if you have data platform customers
-- **Idea 8: Voice-Enabled Field Assistant** — if you have manufacturing/field service customers
-- **Idea 9: Competitive Intelligence Dashboard** — if you have marketing/strategy conversations
+Each one teaches a different skill: long-context reasoning, event-driven agents, voice APIs, web grounding. Let your customer conversations guide the choice.
 
-Each teaches you a new skill: long-context reasoning, event-driven agents, voice APIs, or web grounding. Pick based on where your customer conversations are going.
+### Phase 3: Months 9-18 — The Hard Stuff
 
-### Phase 3: Months 9-18 — Strategic Builds
+- **Agentic Workflow for Approvals** — enterprise workflow automation, human-in-the-loop
+- **Computer-Use Process Automator** — bleeding edge, high wow factor
+- **Multi-Modal Quality Inspector** — deep industry play, complex architecture
 
-**Goal:** Lead complex engagements. Build portfolio pieces that differentiate you.
-
-- **Idea 10: Agentic Workflow for Approvals** — enterprise workflow automation with human-in-the-loop
-- **Idea 11: Computer-Use Process Automator** — bleeding edge, high wow factor
-- **Idea 12: Multi-Modal Quality Inspector** — deep industry play, complex architecture
-
-These are the projects that turn you from "the new CSA" into "the person I call when we're doing something hard with AI."
+These are the projects that turn you from "the new CSA" into "the person I call when we need someone who's done this before."
 
 ---
 
-## Common Architecture Patterns
+## Architecture Patterns You'll Keep Using
 
-All 12 ideas share a few patterns worth internalizing:
+You'll notice the same patterns showing up across these builds:
 
-| Pattern | When to Use | Reference Ideas |
-|---------|-------------|-----------------|
-| **Single prompt agent** | Simple Q&A, classification, summarization | 1, 2, 4 |
-| **Agent + Function Calling** | Agent needs to read/write external systems | 3, 5, 7 |
-| **Workflow agent** | Multi-step processes with branching or human approval | 6, 10 |
-| **Hosted agent** | Custom orchestration logic, framework control | 11, 12 |
-| **Foundry IQ** | Quick RAG without building a pipeline | 4, 10 |
-| **Azure AI Search + custom embeddings** | When you need control over chunking, hybrid search | 1 (stretch), 8, 9, 12 |
-| **Multi-model routing** | Cheap model for simple tasks, expensive model for hard ones | 3, 7 |
+| Pattern | What it means | Where you'll see it |
+|---------|---------------|---------------------|
+| **Single prompt agent** | One agent, one job — Q&A, classification, summarization | 1, 2, 4 |
+| **Agent + Function Calling** | The agent reads from or writes to external systems | 3, 5, 7 |
+| **Workflow agent** | Multi-step process with branching or human approval gates | 6, 10 |
+| **Hosted agent** | You need full code-level control over the orchestration loop | 11, 12 |
+| **Foundry IQ** | Managed RAG — skip the pipeline, bring your docs | 4, 10 |
+| **Azure AI Search + custom embeddings** | You need control over chunking, hybrid search, or image vectors | 1 (stretch), 8, 9, 12 |
+| **Multi-model routing** | Cheap fast model for the easy work, expensive model for the hard work | 3, 7 |
 
 ---
 
-## Model Selection Cheat Sheet
+## Which Model for What
 
-| Task | Model | Why |
-|------|-------|-----|
-| Classification, routing, simple extraction | GPT-4.1-mini | Fast, cheap, accurate enough |
-| General Q&A and summarization | GPT-4.1-mini or GPT-5.4-mini | Balance of quality and cost |
-| Long documents (contracts, reports) | GPT-5.4 (1M token context) | Fits entire documents without chunking |
-| Complex reasoning and synthesis | GPT-5.4 or GPT-5.5 | When quality matters more than latency |
-| Code generation and debugging | codex-mini or GPT-5.3-codex | Optimized for code tasks |
+Don't overthink this. Here's the cheat sheet:
+
+| What you're doing | Use this | Why |
+|-------------------|----------|-----|
+| Classification, routing, simple extraction | GPT-4.1-mini | Fast, cheap, accurate enough for the job |
+| General Q&A, summarization | GPT-4.1-mini or GPT-5.4-mini | Good quality without burning budget |
+| Long documents (contracts, reports) | GPT-5.4 | 1M token context — fits entire docs without chunking |
+| Hard reasoning, synthesis across sources | GPT-5.4 or GPT-5.5 | When getting it right matters more than getting it fast |
+| Code generation | codex-mini or GPT-5.3-codex | Built for code. Use them for code. |
 | Voice interaction | GPT-4o Realtime | Low-latency speech-in/speech-out |
 | Vision / image analysis | GPT-5.4 | Strong multimodal reasoning |
-| Embeddings | text-embedding-3-large | Best retrieval quality; use text-embedding-3-small if budget is tight |
+| Embeddings | text-embedding-3-large | Best retrieval quality (text-embedding-3-small if budget is tight) |
 
 ---
 
-## One More Thing
+## Go
 
-The best demo is the one you've actually built and broken and fixed. Slides about RAG don't teach you what happens when chunking goes wrong. A contract analyzer that hallucinates clause numbers teaches you more about grounding than any training course.
+The best demo is the one you've actually built and broken and fixed. Slides about RAG don't teach you what happens when chunking goes wrong. A contract analyzer that hallucinates clause numbers teaches you more about grounding than any training course ever will.
 
-Build the first three ideas this month. Not next month. This month.
+Build the first three this month. Not next month. This month.
 
 ---
 
-*Generated for Microsoft CSU Cloud & AI new CSA onboarding — May 2026*  
-*All services and models verified against current Microsoft Foundry documentation*
+*CSU Cloud & AI onboarding — May 2026*
