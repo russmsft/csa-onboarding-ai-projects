@@ -405,18 +405,22 @@ Vector storage is not free. Understand the charges before a customer ask:
 | File Search queries | Included in model token cost | No separate per-query charge |
 | File upload | No charge | Storage cost begins after upload |
 
-**Clean up unused vector stores** to avoid ongoing charges:
+**Clean up unused vector stores** to avoid ongoing charges. A ready-to-run cleanup script is at `src/cleanup.py` in this repo:
 
-```python
-# List all vector stores
-for vs in openai.vector_stores.list().data:
-    print(vs.id, vs.name, vs.status)
+```bash
+# See what's there (no deletions)
+python src/cleanup.py
 
-# Delete a specific vector store
-openai.vector_stores.delete(vector_store_id="vs_xxx")
+# Delete everything interactively (prompts for confirmation)
+python src/cleanup.py
+
+# Delete everything without prompting (e.g. in a CI teardown)
+python src/cleanup.py --delete
 ```
 
-> **Tip for demos:** Delete the vector store at the end of each demo session. The `VECTOR_STORE_ID` printed at the end of the script makes it easy to reference.
+Run it from the repo root after any demo session. It lists all vector stores and uploaded files, shows their sizes, and prompts before deleting.
+
+> **Tip for demos:** Run `python src/cleanup.py` at the end of every demo session. The script uses the same `.env` and `az login` token as the main script — no extra setup needed.
 
 ---
 
