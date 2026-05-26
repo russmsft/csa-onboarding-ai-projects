@@ -1,4 +1,3 @@
-explorer "C:\Users\rubradfo\vbd-copilot\csa-onboarding-ai-projects\outputs"
 """
 ask_my_docs.py — Ask My Docs: RAG over documents using Azure OpenAI
 Works with openai>=1.30.0
@@ -188,12 +187,7 @@ def main():
         "What is the main subject of this document?",
         "List any key requirements or commitments mentioned.",
         "Are there any deadlines or dates referenced?",
-    ]    cd C:\Users\rubradfo\vbd-copilot\csa-onboarding-ai-projects
-    
-    # See what's there (safe — no deletions yet)
-    python src\cleanup.py
-    
-    # Then type y/n when it asks if you want to delete
+    ]
 
     print("\n" + "="*60)
     results = []

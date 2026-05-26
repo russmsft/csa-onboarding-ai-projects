@@ -74,8 +74,6 @@ AzureOpenAI client (DefaultAzureCredential)
 
 ---
 
----
-
 ## Pre-Demo Checklist
 
 Run through this before every demo to avoid surprises:
@@ -193,7 +191,7 @@ def create_vector_store(file_id: str, store_name: str):
     else:
         raise TimeoutError("Vector store indexing did not complete within 90 seconds.")
 
-    print(f"  Indexing complete. Chunks: {vs.file_counts.completed}")
+    print(f"  Indexing complete. Chunks indexed: {vs.file_counts.completed}")
     return vs
 ```
 
@@ -247,7 +245,7 @@ def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini"):
         if hasattr(ann, "file_citation"):
             filename = get_filename(ann.file_citation.file_id)
             print(f"   ↳ Source: {filename}")
-    return answer
+    return answer, annotations
 ```
 
 > **Model note:** GPT-4.1-mini is the right pick here — fast and cheap for Q&A. Switch to GPT-4.1 if you need deeper reasoning over complex technical docs.
@@ -271,7 +269,7 @@ def main():
     print("\n" + "="*60)
     for q in questions:
         print(f"\n❓ {q}")
-        ask(q, vs.id)
+        answer, annotations = ask(q, vs.id)
 
     print(f"\nTo reuse: VECTOR_STORE_ID={vs.id}")
 
@@ -371,8 +369,6 @@ openai.vector_stores.files.create(
 
 ---
 
----
-
 ## Enterprise Considerations
 
 Before taking this pattern to a production customer, address these five areas:
@@ -408,8 +404,6 @@ Before taking this pattern to a production customer, address these five areas:
 
 ---
 
----
-
 ## Cost Transparency
 
 Vector storage is not free. Understand the charges before a customer ask:
@@ -423,10 +417,7 @@ Vector storage is not free. Understand the charges before a customer ask:
 **Clean up unused vector stores** to avoid ongoing charges. A ready-to-run cleanup script is at `src/cleanup.py` in this repo:
 
 ```bash
-# See what's there (no deletions)
-python src/cleanup.py
-
-# Delete everything interactively (prompts for confirmation)
+# List everything and prompt before deleting (interactive)
 python src/cleanup.py
 
 # Delete everything without prompting (e.g. in a CI teardown)
