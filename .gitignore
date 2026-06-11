@@ -1,5 +1,7 @@
 .env
+.venv/
 __pycache__/
 *.pyc
 *.pyo
-
+outputs/results_*.json
+outputs/results_*.md

@@ -1,0 +1,41 @@
+name: Bug report
+description: Report a problem with a guide, script, or setup step.
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the issue and what you expected instead.
+    validations:
+      required: true
+  - type: input
+    id: area
+    attributes:
+      label: Affected file or guide
+      placeholder: "docs/how-to/01-ask-my-docs.md or src/ask_my_docs.py"
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Run ...\n2. See ..."
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include Python version, OS, Azure CLI version, and relevant package versions.
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or screenshots
+      description: Remove secrets, resource names, customer data, and tenant details before pasting.
+      render: shell
+    validations:
+      required: false

@@ -1,5 +1,7 @@
 # CSA Onboarding AI Projects
 
+[![AI Ready](https://img.shields.io/badge/AI--Ready-yes-brightgreen?style=flat)](https://github.com/johnpapa/ai-ready)
+
 A curated portfolio of AI project ideas for new Cloud Solution Architects at Microsoft CSU Cloud & AI. Built on Microsoft Foundry.
 
 ## What's in Here
@@ -44,8 +46,8 @@ az login
 # Create a Foundry resource and project via portal:
 # https://ai.azure.com
 
-# Install the Foundry SDK
-pip install azure-ai-projects azure-identity
+# Install the Python dependencies used by the sample scripts
+pip install -r requirements.txt
 ```
 
 ## How to Use the Brainstorm
@@ -63,6 +65,16 @@ Open `docs/ai-brainstorming.md` and follow the phased roadmap:
 - [Microsoft Agent Framework](https://learn.microsoft.com/agent-framework/overview/agent-framework-overview)
 - [Foundry Models catalog](https://learn.microsoft.com/azure/foundry/foundry-models/concepts/models-sold-directly-by-azure)
 - [Baseline reference architecture](https://learn.microsoft.com/azure/architecture/ai-ml/architecture/baseline-microsoft-foundry-chat)
+
+## Contributing
+
+Fork the repo, create a branch, and open a pull request with a short summary and validation notes. For Python changes, install dependencies with `pip install -r requirements.txt` and run:
+
+```bash
+python -m compileall src
+```
+
+If you update a how-to guide, also check the guide table and learning path in this README plus the master list in `docs/ai-brainstorming.md`.
 
 ## Notes
 

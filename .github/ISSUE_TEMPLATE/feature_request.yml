@@ -1,0 +1,34 @@
+name: Feature request
+description: Suggest a new project idea, guide improvement, or repo enhancement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: What should a new CSA be able to do after this change?
+    validations:
+      required: true
+  - type: textarea
+    id: audience
+    attributes:
+      label: Target audience or scenario
+      description: Describe the CSA or customer scenario this helps.
+    validations:
+      required: true
+  - type: textarea
+    id: approach
+    attributes:
+      label: Suggested approach
+      description: Mention affected docs, scripts, Azure services, or Foundry capabilities.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Contribution fit
+      options:
+        - label: This keeps Microsoft Foundry as the primary AI platform.
+        - label: This can be demonstrated or co-built, not just described in theory.
+        - label: This avoids including confidential customer or Microsoft-internal data.
