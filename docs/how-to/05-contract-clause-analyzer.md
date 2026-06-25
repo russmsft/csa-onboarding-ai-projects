@@ -6,20 +6,26 @@ Extract every clause from a contract PDF, run GPT-5.4's 1M-token context window 
 
 ## What You're Building
 
-A Python pipeline that uses Azure AI Document Intelligence to extract clean text from a contract PDF, then sends the entire document to a Foundry agent running GPT-5.4 (which fits contracts up to ~700 pages in a single context window). The agent uses Code Interpreter to generate a risk scoring table. Output: a markdown risk summary plus clause-level annotations highlighting problematic language.
+A Python pipeline that uses Azure AI Document Intelligence to extract clean text from a contract PDF, then sends the entire document to GPT-5.4 through the Responses API (which fits contracts up to ~700 pages in a single context window). The model uses the `code_interpreter` tool to generate a risk scoring table. Output: a markdown risk summary plus a downloadable CSV of clause-level risk scores.
 
 ---
 
 ## Prerequisites
 
-- Microsoft Foundry project with GPT-5.4 deployed
-- Azure AI Document Intelligence resource (any tier; F0 free tier works for testing)
+- A **Microsoft Foundry / Azure AI Services resource** with a `gpt-5.4` deployment:
+  ```bash
+  az cognitiveservices account deployment create --name <res> --resource-group <rg> \
+    --deployment-name gpt-5.4 --model-name gpt-5.4 --model-version 2026-03-05 \
+    --model-format OpenAI --sku-name GlobalStandard --sku-capacity 10
+  ```
+- Azure AI Document Intelligence resource (Step 1 creates one).
+- Azure CLI logged in with **Cognitive Services OpenAI Contributor** on the AI Services resource and **Cognitive Services User** on the Document Intelligence resource. This demo uses **Entra ID auth, not keys**.
+- `AZURE_OPENAI_ENDPOINT` and `DOC_INTEL_ENDPOINT` set in `.env`.
 - Python 3.11+
-- `azure-ai-projects`, `azure-ai-documentintelligence`, `azure-identity`
 - A contract PDF (NDA, SaaS agreement, or employment contract)
 
 ```bash
-pip install azure-ai-projects azure-ai-documentintelligence azure-identity python-dotenv
+pip install "openai>=1.30.0" azure-ai-documentintelligence azure-identity python-dotenv
 ```
 
 ---
@@ -37,15 +43,14 @@ Azure AI Document Intelligence
 Clean structured text (markdown)
         │
         ▼
-Foundry Agent: GPT-5.4 (1M context)
-  └── CodeInterpreterTool
+Responses API: GPT-5.4 (1M context)
+  └── code_interpreter tool
         │  ├── Risk scoring logic (Python)
-        │  └── Generates risk table as CSV/markdown
+        │  └── Generates risk table as CSV + markdown
         ▼
 Outputs:
-  ├── risk_summary.md (overall risk assessment)
-  ├── risk_table.csv (clause-by-clause scores)
-  └── annotations.json (specific risky phrases)
+  ├── risk_analysis.md (executive summary + risk table)
+  └── risk_table.csv (clause-by-clause scores)
 ```
 
 ---
@@ -61,16 +66,19 @@ az cognitiveservices account create \
   --kind FormRecognizer \
   --sku S0 \
   --location eastus2 \
+  --custom-domain contract-doc-intel \
   --yes
 
-# Get endpoint and key
+# Endpoint (Entra ID auth — no keys; many tenants disable key/local auth by policy)
 DOC_INTEL_ENDPOINT=$(az cognitiveservices account show \
   --name contract-doc-intel --resource-group $RG \
   --query properties.endpoint -o tsv)
 
-DOC_INTEL_KEY=$(az cognitiveservices account keys list \
-  --name contract-doc-intel --resource-group $RG \
-  --query key1 -o tsv)
+# Grant yourself data-plane access via Entra ID
+az role assignment create \
+  --assignee $(az ad signed-in-user show --query id -o tsv) \
+  --role "Cognitive Services User" \
+  --scope $(az cognitiveservices account show --name contract-doc-intel --resource-group $RG --query id -o tsv)
 ```
 
 ### Step 2 — Extract text from contract PDF
@@ -80,16 +88,16 @@ import os
 import pathlib
 from dotenv import load_dotenv
 from azure.ai.documentintelligence import DocumentIntelligenceClient
-from azure.core.credentials import AzureKeyCredential
+from azure.identity import DefaultAzureCredential
 
 load_dotenv()
 
 DOC_INTEL_ENDPOINT = os.environ["DOC_INTEL_ENDPOINT"]
-DOC_INTEL_KEY = os.environ["DOC_INTEL_KEY"]
 
+# Entra ID auth (az login locally / managed identity) — no keys
 doc_client = DocumentIntelligenceClient(
     endpoint=DOC_INTEL_ENDPOINT,
-    credential=AzureKeyCredential(DOC_INTEL_KEY)
+    credential=DefaultAzureCredential()
 )
 
 def extract_contract_text(pdf_path: str) -> str:
@@ -105,36 +113,31 @@ def extract_contract_text(pdf_path: str) -> str:
 
     # Concatenate all page content
     full_text = result.content
-    print(f"Extracted {len(full_text)} characters from {result.pages} pages")
+    print(f"Extracted {len(full_text)} characters from {len(result.pages)} pages")
     return full_text
 ```
 
 > **Why Document Intelligence instead of raw PDF parsing?** PyPDF2 and pdfplumber struggle with multi-column layouts, headers/footers, and tables (common in legal documents). Document Intelligence's Layout model correctly handles these and outputs clean markdown — which the model processes much better.
 
-### Step 3 — Create the analysis agent
+### Step 3 — Set up the model client and risk instructions
+
+There's no separate agent to register — the Responses API takes the instructions and the `code_interpreter` tool on each call.
 
 ```python
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
-from azure.ai.projects.models import (
-    CodeInterpreterTool,
-    PromptAgentDefinition
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from openai import AzureOpenAI
+
+client = AzureOpenAI(
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    azure_ad_token_provider=get_bearer_token_provider(
+        DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
+    api_version="2025-04-01-preview",
 )
 
-PROJECT_ENDPOINT = os.environ["FOUNDRY_PROJECT_ENDPOINT"]
-ai_client = AIProjectClient(
-    endpoint=PROJECT_ENDPOINT,
-    credential=DefaultAzureCredential()
-)
+MODEL = "gpt-5.4"   # 1M context — fits even long contracts
+CODE_INTERPRETER = [{"type": "code_interpreter", "container": {"type": "auto"}}]
 
-def create_contract_agent() -> str:
-    """Create the contract analysis agent with Code Interpreter."""
-    code_interpreter = CodeInterpreterTool()
-
-    agent_def = PromptAgentDefinition(
-        model="gpt-5.4",   # 1M context — fits even long contracts
-        name="contract-analyzer",
-        instructions="""You are an expert contract attorney and risk analyst.
+INSTRUCTIONS = """You are an expert contract attorney and risk analyst.
 When given a contract, you will:
 
 1. Identify and extract all clauses (give each a short name and clause number)
@@ -145,7 +148,8 @@ When given a contract, you will:
    - 4 = High risk, recommend negotiation
    - 5 = Severe risk, recommend rejection or legal counsel
 3. Flag specific risky language with exact quotes
-4. Use Code Interpreter to generate a risk scoring table
+4. Use the python (code_interpreter) tool to generate a risk scoring table and
+   save it as a CSV file named risk_table.csv
 
 Risk categories to check:
 - Liability caps and indemnification (especially uncapped liability)
@@ -156,96 +160,61 @@ Risk categories to check:
 - Non-compete and non-solicitation scope
 - Auto-renewal with short cancellation windows
 
-Output format:
+Output format in your final message:
 1. Executive summary (3-5 sentences)
-2. Risk table (generated via Code Interpreter as markdown)
+2. Risk table (as a markdown table)
 3. High-risk clause details (risk score 4-5 with exact quotes)
 4. Recommended actions
-""",
-        tools=[code_interpreter.definitions],
-        tool_resources=code_interpreter.resources,
-    )
-    agent = ai_client.agents.create_version(definition=agent_def)
-    print(f"Contract agent created: {agent.id}")
-    return agent.id
+"""
 ```
 
 ### Step 4 — Run the analysis
 
 ```python
-from azure.ai.projects.models import MessageRole
-import json
-
-def analyze_contract(agent_id: str, contract_text: str, contract_name: str) -> dict:
-    """Analyze a contract and return structured results."""
-    thread = ai_client.agents.create_thread()
-
-    # Attach the contract text as the message
-    # GPT-5.4 has 1M context — even a 300-page contract is ~150K tokens
-    ai_client.agents.create_message(
-        thread_id=thread.id,
-        role=MessageRole.USER,
-        content=(
+def analyze_contract(contract_text: str, contract_name: str) -> tuple[str, str | None]:
+    """Analyze a contract; returns (analysis_markdown, code_interpreter_container_id)."""
+    print("Running analysis (this takes 30-90 seconds for large contracts)...")
+    # GPT-5.4 has 1M context — even a 300-page contract is ~150K tokens.
+    # The Responses API runs the code_interpreter tool loop for us; there are
+    # no threads/runs and no separate agent registration.
+    response = client.responses.create(
+        model=MODEL,
+        instructions=INSTRUCTIONS,
+        input=(
             f"Please analyze this contract: **{contract_name}**\n\n"
             "Generate a complete risk assessment with a clause-by-clause risk table.\n\n"
             f"--- CONTRACT TEXT ---\n\n{contract_text}"
-        )
+        ),
+        tools=CODE_INTERPRETER,
     )
 
-    print("Running analysis (this takes 30-90 seconds for large contracts)...")
-    run = ai_client.agents.create_and_process_run(
-        thread_id=thread.id,
-        agent_id=agent_id
-    )
+    # The tool runs in a container that holds any files it created (risk_table.csv)
+    container_id = None
+    for item in response.output:
+        if getattr(item, "type", None) == "code_interpreter_call":
+            container_id = getattr(item, "container_id", None)
 
-    if run.status != "completed":
-        raise RuntimeError(f"Analysis failed: {run.status}\n{run.last_error}")
-
-    messages = ai_client.agents.list_messages(thread_id=thread.id)
-    last = messages.get_last_message_by_role(MessageRole.ASSISTANT)
-
-    # Collect text content and any generated files
-    analysis_text = ""
-    generated_files = []
-
-    for block in last.content:
-        if hasattr(block, "text"):
-            analysis_text += block.text.value + "\n"
-        elif hasattr(block, "image_file"):
-            generated_files.append(block.image_file.file_id)
-
-    # Also check for file attachments from Code Interpreter
-    for msg in messages.data:
-        for att in getattr(msg, "attachments", []) or []:
-            if hasattr(att, "file_id"):
-                generated_files.append(att.file_id)
-
-    return {
-        "analysis": analysis_text,
-        "generated_files": generated_files,
-        "thread_id": thread.id
-    }
+    return response.output_text, container_id
 ```
 
 ### Step 5 — Download Code Interpreter outputs
 
 ```python
-def download_agent_files(file_ids: list[str], output_dir: str = "outputs") -> list[str]:
-    """Download any files generated by Code Interpreter."""
-    pathlib.Path(output_dir).mkdir(exist_ok=True)
+def download_container_files(container_id: str | None, output_dir: str) -> list[str]:
+    """Download any files the code_interpreter tool created in its container."""
+    if not container_id:
+        return []
+    pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
     paths = []
 
-    for file_id in file_ids:
-        # Get file metadata to determine name/extension
-        file_info = ai_client.agents.get_file(file_id)
-        filename = getattr(file_info, "filename", f"{file_id}.bin")
-        out_path = f"{output_dir}/{filename}"
-
-        # Download file content
-        content = ai_client.agents.get_file_content(file_id)
-        with open(out_path, "wb") as f:
-            for chunk in content:
-                f.write(chunk)
+    for f in client.containers.files.list(container_id=container_id).data:
+        if getattr(f, "source", None) != "assistant":   # skip the input file(s)
+            continue
+        name = (getattr(f, "path", None) or f.id).split("/")[-1]
+        content = client.containers.files.content.retrieve(f.id, container_id=container_id)
+        out_path = f"{output_dir}/{name}"
+        with open(out_path, "wb") as fh:
+            fh.write(content.read())
         paths.append(out_path)
         print(f"Downloaded: {out_path}")
 
@@ -264,27 +233,23 @@ def main(pdf_path: str):
     print("Step 1: Extracting contract text...")
     contract_text = extract_contract_text(pdf_path)
 
-    print("Step 2: Creating analysis agent...")
-    agent_id = create_contract_agent()
+    print("Step 2: Analyzing contract...")
+    analysis, container_id = analyze_contract(contract_text, contract_name)
 
-    print("Step 3: Analyzing contract...")
-    results = analyze_contract(agent_id, contract_text, contract_name)
-
-    print("Step 4: Saving results...")
+    print("Step 3: Saving results...")
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = f"outputs/{contract_name}_{ts}"
     pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
 
-    # Save main analysis
+    # Save main analysis (UTF-8 — legal text often has curly quotes/accents)
     analysis_path = f"{output_dir}/risk_analysis.md"
-    with open(analysis_path, "w") as f:
+    with open(analysis_path, "w", encoding="utf-8") as f:
         f.write(f"# Contract Risk Analysis: {contract_name}\n\n")
-        f.write(results["analysis"])
+        f.write(analysis)
     print(f"Saved analysis: {analysis_path}")
 
-    # Download Code Interpreter outputs (tables, charts)
-    if results["generated_files"]:
-        download_agent_files(results["generated_files"], output_dir)
+    # Download the CSV (and any other files) the tool generated
+    download_container_files(container_id, output_dir)
 
     print(f"\nAnalysis complete. Results in: {output_dir}/")
 
@@ -301,13 +266,9 @@ python contract_analyzer.py my-vendor-agreement.pdf
 
 ## Test It
 
-Use a public sample contract (NDAs and SaaS agreements are widely available):
+Use any contract PDF you have (an NDA, SaaS agreement, or employment contract works well):
 
 ```bash
-# Download a sample NDA from GitHub
-curl -L "https://raw.githubusercontent.com/microsoft/Commercial-Marketplace-SaaS-Accelerator/main/docs/saas-agreement-sample.pdf" \
-  -o sample-contract.pdf
-
 python contract_analyzer.py sample-contract.pdf
 ```
 
@@ -333,9 +294,10 @@ with only 15-day cancellation notice required...
 
 ## Common Mistakes
 
+- **Reaching for the old Assistants `agents` API.** `azure-ai-projects` 2.x removed the threads/runs Assistants surface — `AIProjectClient` has no `.agents`, and `CodeInterpreterTool`/`PromptAgentDefinition`/`MessageRole` aren't importable. Use the `AzureOpenAI` Responses API with `tools=[{"type": "code_interpreter", ...}]`, as shown above.
 - **Document Intelligence returns empty text.** This happens with password-protected PDFs. Remove password protection before processing.
 - **GPT-5.4 token limit for very large contracts.** 1M tokens ≈ 750K words. Most contracts fit easily, but if you hit limits, split by section headers returned by Document Intelligence.
-- **Code Interpreter generates a chart but returns no risk table.** Specify in your prompt: "Generate the risk table as both a markdown table AND a CSV file attachment."
+- **Code Interpreter ran but you can't find the CSV.** The file lives in the tool's container, not the message. List it with `client.containers.files.list(container_id=...)` (filter `source == "assistant"`) and download via `client.containers.files.content.retrieve(...)`, as in Step 5.
 
 ---
 
