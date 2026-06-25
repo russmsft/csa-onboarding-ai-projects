@@ -17,7 +17,7 @@ If this touches a live Azure AI / Foundry demo, include the manual validation pe
 ## Checklist
 
 - [ ] Updated `README.md` if guide links, learning path, prerequisites, or setup commands changed.
-- [ ] Updated `docs/ai-brainstorming.md` if project order, service mappings, models, or roadmap changed.
+- [ ] Updated `README.md` (at-a-glance table, per-project sections, roadmap) if project order, service mappings, models, or roadmap changed.
 - [ ] Updated the matching `docs/how-to/` guide if runnable code or Azure setup changed.
 - [ ] Updated `requirements.txt` and `.env.example` if dependencies or configuration changed.
 - [ ] Removed secrets, customer data, local paths, generated outputs, and tenant-specific details.

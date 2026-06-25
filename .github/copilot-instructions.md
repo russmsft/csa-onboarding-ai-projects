@@ -4,7 +4,7 @@ This is a CSA onboarding portfolio — 12 AI project ideas with step-by-step how
 
 ## Repository Structure
 
-- `docs/ai-brainstorming.md` — Master list of all 12 project ideas with ratings, service mappings, and phased roadmap
+- `README.md` — Landing page and master list of all 12 project ideas with ratings, service mappings, phased roadmap, and per-project links to how-to guides
 - `docs/how-to/NN-<name>.md` — Step-by-step build guides (numbered 01–12, matching the brainstorm order)
 - `src/` — Working Python scripts (currently `ask_my_docs.py` and `cleanup.py`)
 - `outputs/` — Generated results from script runs (timestamped `.md` and `.json` files)
@@ -76,7 +76,7 @@ For changes that touch live Azure AI / Foundry behavior, manually validate again
 | `src/cleanup.py` cleanup behavior or CLI flags | `README.md`, `docs/how-to/01-ask-my-docs.md`, and PR checklist language if validation cleanup changes |
 | Python dependencies | `requirements.txt`, README setup commands, relevant guide prerequisites, and `.github/workflows/*.yml` if install or validation changes |
 | Required environment variables | `.env.example`, README setup steps, and affected how-to prerequisites |
-| `docs/ai-brainstorming.md` project ordering, names, difficulty, model choices, or roadmap | `README.md` guide table and learning path, plus matching `docs/how-to/NN-<name>.md` files |
-| A `docs/how-to/NN-<name>.md` filename, title, or project scope | README guide table, README learning path, and any cross-links from `docs/ai-brainstorming.md` |
-| Azure service choices, RBAC roles, or CLI setup commands in a guide | The guide prerequisites, architecture section, cleanup notes, and master service mapping in `docs/ai-brainstorming.md` |
+| `README.md` project ordering, names, difficulty, model choices, or roadmap | matching `docs/how-to/NN-<name>.md` files |
+| A `docs/how-to/NN-<name>.md` filename, title, or project scope | README at-a-glance table, per-project section, and roadmap links |
+| Azure service choices, RBAC roles, or CLI setup commands in a guide | The guide prerequisites, architecture section, cleanup notes, and the matching project section in `README.md` |
 | Generated output examples in `outputs/` | Keep committed examples non-confidential and update docs that describe the output shape |

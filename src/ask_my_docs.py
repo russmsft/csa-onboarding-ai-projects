@@ -1,5 +1,6 @@
 """
-ask_my_docs.py — Ask My Docs: RAG over documents using Azure OpenAI
+ask_my_docs.py — Ask My Docs: RAG over documents on Microsoft Foundry
+Uses Foundry Models via the OpenAI-compatible Responses API + File Search.
 Works with openai>=1.30.0
 
 Usage:

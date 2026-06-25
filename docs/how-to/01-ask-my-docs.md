@@ -1,12 +1,14 @@
-# 01 — Ask My Docs: RAG Over Your Documents with Azure OpenAI
+# 01 — Ask My Docs: RAG Over Your Documents on Microsoft Foundry
 
-Give your documents a voice. This guide wires up Azure OpenAI File Search so you can upload any document and get cited, accurate answers back in seconds — no custom chunking, no vector DB to manage.
+Give your documents a voice. This guide wires up File Search on Microsoft Foundry so you can upload any document and get cited, accurate answers back in seconds — no custom chunking, no vector DB to manage.
+
+> **Platform note:** This demo runs on your **Microsoft Foundry / Azure AI Services resource** using the Foundry Models endpoint (`https://<resource>.cognitiveservices.azure.com/`) through the OpenAI-compatible **Responses API**. That's one of two valid Foundry RAG paths — see [When to graduate to Foundry Agent Service](#when-to-graduate-to-foundry-agent-service) for the other.
 
 ---
 
 ## What You're Building
 
-A Python script that uploads a document to Azure OpenAI, creates a managed vector store over it, then uses the Responses API with `file_search` to answer questions in plain English. Every answer includes document citations so you can verify every claim.
+A Python script that uploads a document to your Microsoft Foundry resource, creates a managed vector store over it, then uses the Responses API with `file_search` to answer questions in plain English. Every answer includes document citations so you can verify every claim.
 
 This is the fastest path to production RAG (Retrieval-Augmented Generation) — no embeddings code, no external vector database, no agent framework required.
 
@@ -168,7 +170,7 @@ import pathlib
 import time
 
 def upload_pdf(pdf_path: str):
-    """Upload a document to Azure OpenAI and return the file object."""
+    """Upload a document to your Foundry resource and return the file object."""
     path = pathlib.Path(pdf_path)
     print(f"Uploading {path.name} ({path.stat().st_size // 1024} KB)...")
     with open(path, "rb") as f:
@@ -387,12 +389,23 @@ Before taking this pattern to a production customer, address these five areas:
 
 | Pattern | Best for | Not ideal for |
 |---------|----------|--------------|
-| **This guide** (Azure OpenAI File Search) | Quick RAG over <100 documents, fast prototyping, single-tenant demos | Large document libraries, complex hybrid search, multi-index scenarios |
-| **Azure AI Foundry Agents** | Multi-tool agents, code interpreter, persistent agent definitions | Simple Q&A where agent overhead isn't needed |
-| **Azure AI Search + AOAI** | Enterprise-scale search, hybrid keyword+semantic, metadata filtering at scale | Fast demo setup — higher configuration overhead |
+| **This guide** (Foundry File Search via Responses API) | Quick RAG over <100 documents, fast prototyping, single-tenant demos | Large document libraries, complex hybrid search, multi-index scenarios |
+| **Foundry Agent Service** | Multi-tool agents, code interpreter, persistent agent definitions | Simple Q&A where agent overhead isn't needed |
+| **Azure AI Search + Foundry Models** | Enterprise-scale search, hybrid keyword+semantic, metadata filtering at scale | Fast demo setup — higher configuration overhead |
 | **"Add your data" in Azure OpenAI Studio** | No-code proof of concept | Production deployments, programmatic control |
 
 **CSA talk-track:** *"We're using the simplest possible pattern here — no infrastructure beyond an Azure AI Services resource. This gives you a demo in 10 minutes. When you need filters, access control per document, or millions of documents, Azure AI Search is the right layer to add underneath."*
+
+### When to graduate to Foundry Agent Service
+
+The Responses API + File Search used in this guide is the right call for **stateless Q&A** — fewest moving parts, no agent lifecycle to manage. Reach for **Foundry Agent Service** (the `azure-ai-projects` SDK, project endpoint `https://<resource>.services.ai.azure.com/api/projects/<project>`) when you need:
+
+- a **persistent agent** you register once and reuse,
+- **conversation threads** that retain memory across turns,
+- **multiple tools** on one agent (Code Interpreter, function calling, web search), or
+- **multi-agent orchestration**.
+
+Both paths run on the same Foundry resource — Guides 06, 10, and 12 use Agent Service where that extra structure earns its keep.
 
 ---
 

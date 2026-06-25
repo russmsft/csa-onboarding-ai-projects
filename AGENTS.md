@@ -4,7 +4,7 @@
 
 This repository is a CSA onboarding portfolio for Microsoft Foundry projects. It combines:
 
-- A master brainstorming document in `docs/ai-brainstorming.md`
+- A master portfolio in `README.md` (the landing page)
 - Twelve numbered how-to guides in `docs/how-to/`
 - A small Python demo in `src/` for the Ask My Docs RAG pattern
 
@@ -15,7 +15,7 @@ The audience is new Cloud Solution Architects with solid cloud experience who ar
 | Path | Purpose |
 | --- | --- |
 | `README.md` | Entry point, learning path, prerequisites, and guide index |
-| `docs/ai-brainstorming.md` | Master list of 12 project ideas, roadmap, and service mappings |
+| `README.md` | Landing page and master list of 12 project ideas, roadmap, service mappings, and per-project guide links |
 | `docs/how-to/NN-<name>.md` | Step-by-step build guides matching the numbered project list |
 | `src/ask_my_docs.py` | Working Python RAG demo using Azure OpenAI Responses API and File Search |
 | `src/cleanup.py` | Cleanup utility for uploaded files and vector stores |
@@ -70,7 +70,7 @@ When adding a new guide or renumbering existing guides, update all linked surfac
 | Change | Also update |
 | --- | --- |
 | Add or rename `docs/how-to/NN-<name>.md` | `README.md` guide table and learning path |
-| Change the project list/order | `docs/ai-brainstorming.md`, guide filenames, and README references |
+| Change the project list/order | `README.md`, guide filenames, and README references |
 | Change required Azure services | Guide prerequisites, architecture section, and service mapping in the brainstorm |
 | Add runnable code | `requirements.txt`, `.env.example`, README setup commands, and CI if validation changes |
 | Change output format | `src/ask_my_docs.py`, sample outputs in `outputs/`, and any guide text that describes results |
