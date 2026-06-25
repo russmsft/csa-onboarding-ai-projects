@@ -35,6 +35,26 @@ This is the fastest path to production RAG (Retrieval-Augmented Generation) — 
     --sku S0 \
     --location eastus
   ```
+- **A `gpt-4.1-mini` model deployment on that resource.** The script calls the model by its deployment name, so this must exist or every request fails with a model-not-found error. First list the model versions available in your region, then create the deployment:
+  ```bash
+  # 1. See available gpt-4.1-mini versions for your region
+  az cognitiveservices account list-models \
+    --name <your-resource-name> \
+    --resource-group <your-rg> \
+    --query "[?name=='gpt-4.1-mini'].{model:name, version:version, format:format}" -o table
+
+  # 2. Create the deployment (the deployment name must match MODEL in the script: gpt-4.1-mini)
+  az cognitiveservices account deployment create \
+    --name <your-resource-name> \
+    --resource-group <your-rg> \
+    --deployment-name gpt-4.1-mini \
+    --model-name gpt-4.1-mini \
+    --model-version <version-from-step-1> \
+    --model-format OpenAI \
+    --sku-name GlobalStandard \
+    --sku-capacity 10
+  ```
+  > The deployment name must match the `MODEL` constant in `src/ask_my_docs.py` (`gpt-4.1-mini`). If you deploy under a different name, update the script to match.
 - Python 3.11+
 - `openai >= 1.30.0`, `azure-identity`, and `python-dotenv` installed
 - Azure CLI logged in (`az login`) with **Cognitive Services OpenAI Contributor** on the resource (the lower "Cognitive Services User" role does not grant permission to upload files)
@@ -84,7 +104,7 @@ Run through this before every demo to avoid surprises:
 |---|-------|-------|
 | 1 | Azure subscription active | Confirm in [portal.azure.com](https://portal.azure.com) |
 | 2 | AIServices resource deployed | `az cognitiveservices account show --name <name> --resource-group <rg>` |
-| 3 | GPT-4.1-mini deployed | Check under Deployments in the resource |
+| 3 | GPT-4.1-mini deployed | Deployment name must be `gpt-4.1-mini`. List with `az cognitiveservices account deployment list --name <name> --resource-group <rg> -o table` |
 | 4 | Role assigned | **Cognitive Services OpenAI Contributor** — allow 5+ minutes for propagation after assignment |
 | 5 | `az login` completed | `az account show` should return your subscription |
 | 6 | `.env` configured | `AZURE_OPENAI_ENDPOINT` set to your resource endpoint |
@@ -244,8 +264,10 @@ def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini"):
 
     print(f"💬 {answer}")
     for ann in annotations:
-        if hasattr(ann, "file_citation"):
-            filename = get_filename(ann.file_citation.file_id)
+        # Responses API file_search annotations are AnnotationFileCitation objects
+        # with flat fields (type/file_id/filename), not a nested `ann.file_citation`.
+        if getattr(ann, "type", None) == "file_citation":
+            filename = getattr(ann, "filename", None) or get_filename(ann.file_id)
             print(f"   ↳ Source: {filename}")
     return answer, annotations
 ```

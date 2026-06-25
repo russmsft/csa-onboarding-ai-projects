@@ -201,10 +201,14 @@ def main():
         print(f"💬 {answer}")
         sources = []
         for ann in annotations:
-            if hasattr(ann, "file_citation"):
-                filename = resolve_filename(ann.file_citation.file_id)
-                print(f"   ↳ Source: {filename}")
-                sources.append(filename)
+            # Responses API file_search annotations are AnnotationFileCitation
+            # objects with flat fields (type/file_id/filename) — not the older
+            # Assistants-style nested `ann.file_citation`.
+            if getattr(ann, "type", None) == "file_citation":
+                filename = getattr(ann, "filename", None) or resolve_filename(ann.file_id)
+                if filename not in sources:
+                    print(f"   ↳ Source: {filename}")
+                    sources.append(filename)
         results.append({"question": q, "answer": answer, "sources": sources})
 
     print("\n" + "="*60)
