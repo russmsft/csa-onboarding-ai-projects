@@ -41,9 +41,9 @@ openai = AzureOpenAI(
 )
 
 
-def upload_pdf(pdf_path: str):
-    """Upload a PDF to Foundry file storage and return the file object."""
-    path = pathlib.Path(pdf_path)
+def upload_document(doc_path: str):
+    """Upload a document (PDF, .txt, .md) to Foundry file storage and return the file object."""
+    path = pathlib.Path(doc_path)
     if not path.exists():
         raise FileNotFoundError(f"PDF not found: {pdf_path}")
     print(f"Uploading {path.name} ({path.stat().st_size // 1024} KB)...")
@@ -86,8 +86,11 @@ def resolve_filename(file_id: str) -> str:
     return _file_name_cache[file_id]
 
 
-def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini") -> str:
-    """Ask a question grounded in the vector store using Responses API."""
+def ask(question: str, vector_store_id: str, model: str = "gpt-4.1-mini") -> tuple[str, list]:
+    """Ask a question grounded in the vector store using Responses API.
+
+    Returns a tuple of (answer_text, annotations).
+    """
     response = openai.responses.create(
         model=model,
         input=question,
@@ -177,7 +180,7 @@ def main():
     OUTPUT_DIR = _REPO_ROOT / "outputs"
 
     # Step 1: upload
-    uploaded = upload_pdf(PDF_PATH)
+    uploaded = upload_document(PDF_PATH)
 
     # Step 2: create vector store and index
     vs = create_vector_store(uploaded.id, STORE_NAME)
