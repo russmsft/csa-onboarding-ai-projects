@@ -1,4 +1,4 @@
-Microsoft Cloud Solution Architect - Onboarding Guide
+Microsoft Cloud Solution Architect - Ramp-Up Guide
 
 Key Requirements:
 1. Complete Azure Fundamentals certification within 30 days
@@ -10,4 +10,4 @@ Important Dates:
 - Day 60: First customer meeting debrief due
 - Day 90: Ramp-up review with manager
 
-The main subject of this document is onboarding guidance for new CSA hires at Microsoft.
+The main subject of this document is ramp-up guidance for new Cloud Solution Architect hires at Microsoft.

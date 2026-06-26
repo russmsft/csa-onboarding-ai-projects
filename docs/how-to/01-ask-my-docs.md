@@ -313,7 +313,7 @@ Creating vector store 'ask-my-docs-store'...
 ============================================================
 
 ❓ What is the main subject of this document?
-💬 The main subject of the document is onboarding guidance for new Cloud Solution
+💬 The main subject of the document is ramp-up guidance for new Cloud Solution
 Architect (CSA) hires at Microsoft, including key requirements, milestones, and
 important dates within the first 90 days.
 
