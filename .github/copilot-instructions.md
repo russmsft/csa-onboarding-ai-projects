@@ -5,7 +5,7 @@ This is a portfolio of AI projects for Microsoft Cloud Solution Architects — 1
 ## Repository Structure
 
 - `README.md` — Landing page and master list of all 12 project ideas with ratings, service mappings, phased roadmap, and per-project links to how-to guides
-- `docs/how-to/NN-<name>.md` — Step-by-step build guides (numbered 01–12, matching the brainstorm order)
+- `docs/how-to/NN-<name>.md` — Step-by-step build guides (numbered 01–12, matching the brainstorm order; 13 is a cross-region failover capstone)
 - `src/` — Working Python scripts (currently `ask_my_docs.py` and `cleanup.py`)
 - `outputs/` — Generated results from script runs (timestamped `.md` and `.json` files)
 - `.env.example` — Template for required environment variables

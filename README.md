@@ -1,6 +1,6 @@
 # AI Projects for Cloud Solution Architects
 
-A curated portfolio of **12 AI project ideas** — each with a step-by-step build guide — for Cloud Solution Architects at Microsoft CSU Cloud & AI. Build them to **sharpen your AI skills**, **show customers what's possible**, and **kick-start co-build POCs**. Everything runs on **Microsoft Foundry** (not standalone Azure OpenAI, not third-party).
+A curated portfolio of **12 AI project ideas** — each with a step-by-step build guide — for Cloud Solution Architects at Microsoft CSU Cloud & AI, plus a **capstone resilience blueprint** for taking them to production. Build them to **sharpen your AI skills**, **show customers what's possible**, and **kick-start co-build POCs**. Everything runs on **Microsoft Foundry** (not standalone Azure OpenAI, not third-party).
 
 You know cloud. These projects build your fluency with the AI stack and leave you with working demos on your laptop — not slides. So when a customer asks *"so what can this actually do?"*, you show them.
 
@@ -10,7 +10,7 @@ You know cloud. These projects build your fluency with the AI stack and leave yo
 
 | Path | What it is |
 |------|------------|
-| **This README** | The portfolio — all 12 projects, the roadmap, architecture patterns, and the model cheat sheet |
+| **This README** | The portfolio — all 12 projects, the capstone resilience blueprint, the roadmap, architecture patterns, and the model cheat sheet |
 | [`docs/how-to/`](docs/how-to/) | A complete step-by-step build guide for each project (real code, CLI commands, architecture, cleanup) |
 | [`src/`](src/) | Working Python for the first project ([`ask_my_docs.py`](src/ask_my_docs.py)) plus a [`cleanup.py`](src/cleanup.py) helper |
 | [`.env.example`](.env.example) | Template for the one required environment variable |
@@ -62,9 +62,9 @@ pip install azure-ai-projects azure-identity
 
 ---
 
-## The 12 Projects at a Glance
+## The 12 Projects (+ Capstone) at a Glance
 
-Ordered roughly by difficulty. Start at the top.
+Ordered roughly by difficulty. Start at the top. Project 13 is a production-hardening capstone that applies across the portfolio.
 
 | # | Project | Type | Difficulty | Effort | Guide |
 |---|---------|------|------------|--------|-------|
@@ -80,6 +80,7 @@ Ordered roughly by difficulty. Start at the top.
 | 10 | Agentic Workflow for Approvals | Co-build | ⭐⭐⭐⭐ | 4–6 weeks | [Guide 10](docs/how-to/10-agentic-approval-workflow.md) |
 | 11 | Computer-Use Process Automator | Demo asset | ⭐⭐⭐⭐ | 4–6 weeks | [Guide 11](docs/how-to/11-computer-use-automator.md) |
 | 12 | Multi-Modal Quality Inspector | Co-build | ⭐⭐⭐⭐⭐ | 6–8 weeks | [Guide 12](docs/how-to/12-multimodal-quality-inspector.md) |
+| 13 | Foundry Cross-Region Failover *(capstone)* | Architecture | ⭐⭐⭐⭐⭐ | varies | [Guide 13](docs/how-to/13-cross-region-failover.md) |
 
 ---
 
@@ -231,6 +232,18 @@ The hardest build here, and the highest-value demo for manufacturing. Production
 
 ---
 
+### 13. [Foundry Cross-Region Failover — Resilience Blueprint](docs/how-to/13-cross-region-failover.md)
+
+**Capstone · Architecture · varies**
+
+The capstone that turns a demo into something a customer can run in production. Microsoft Foundry has **no native cross-region failover** — if the primary region goes dark, traffic doesn't move on its own. This guide is the blueprint for the failover layer you build yourself: Front Door routing, APIM as an AI gateway, identical model deployments in a paired region, a geo-replicated data layer, and a runbook that handles the part Foundry won't — **recreating stateful Agent Service agents** on failover. You also get the framework to choose Hot/Hot, Hot/Warm, or Hot/Cold against a customer's RTO/RPO and budget. Build this after you've shipped a few of the earlier projects and a customer asks *"but what happens when a region goes down?"*
+
+**You'll use:** Microsoft Foundry (paired regions), Azure Front Door, Azure API Management, Cosmos DB (geo-replication), Azure AI Search, Storage (GZRS/RA-GRS), Key Vault, ACR, Bicep/Terraform, Azure Monitor + Log Analytics.
+
+📘 **Build it:** [Guide 13 — Cross-Region Failover](docs/how-to/13-cross-region-failover.md)
+
+---
+
 ## Suggested Build Order
 
 A difficulty-ordered path through the portfolio. The week numbers are a suggested cadence, not a deadline — go at your own pace.
@@ -264,6 +277,7 @@ Each teaches a different skill: long-context reasoning, event-driven agents, voi
 - [Agentic Workflow for Approvals](docs/how-to/10-agentic-approval-workflow.md) — enterprise workflow automation, human-in-the-loop
 - [Computer-Use Process Automator](docs/how-to/11-computer-use-automator.md) — bleeding edge, high wow factor
 - [Multi-Modal Quality Inspector](docs/how-to/12-multimodal-quality-inspector.md) — deep industry play, complex architecture
+- [Foundry Cross-Region Failover](docs/how-to/13-cross-region-failover.md) — the capstone: make any of the above survive a region outage in production
 
 These turn you into the person teammates call when they need someone who's done this before.
 
