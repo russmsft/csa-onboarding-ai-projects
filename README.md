@@ -204,9 +204,9 @@ Your *"I didn't know you could do that"* demo. Three agents, one incident, all w
 
 **Co-build template · 2–3 weeks**
 
-Nobody wants to find bad data in a dashboard two days after the pipeline broke. Build an agent that runs quality checks when a pipeline completes — null spikes, schema drift, distribution shifts — and either auto-remediates or pings the data team with a diagnosis. Multi-model routing again: GPT-4.1-mini to describe anomalies, codex-mini to generate remediation scripts.
+Nobody wants to find bad data in a dashboard two days after the pipeline broke. Build an agent that runs quality checks when a pipeline completes — null spikes, schema drift, distribution shifts — and either auto-remediates or pings the data team with a diagnosis. GPT-4.1-mini with Code Interpreter does the statistical work: cheap, and it writes its own Python to compute z-scores and flag anomalies against historical baselines.
 
-**You'll use:** Foundry (prompt agent with Code Interpreter), GPT-4.1-mini + codex-mini, Azure Functions (Event Grid / change-feed trigger), Cosmos DB, Data Factory or Microsoft Fabric.
+**You'll use:** Foundry (Responses API with Code Interpreter), GPT-4.1-mini, Azure Functions (Event Grid trigger), Azure Blob Storage, Data Factory or Microsoft Fabric (event source).
 
 <details>
 <summary>📐 <strong>Architecture diagram</strong></summary>
@@ -386,7 +386,7 @@ The same patterns show up across these builds:
 | **Hosted agent** | Full code-level control over the orchestration loop | 11, 12 |
 | **Foundry IQ** | Managed RAG — skip the pipeline, bring your docs | 4, 10 |
 | **Azure AI Search + custom embeddings** | Control over chunking, hybrid search, or image vectors | 1 (stretch), 8, 9, 12 |
-| **Multi-model routing** | Cheap fast model for easy work, expensive model for hard work | 3, 7 |
+| **Multi-model routing** | Cheap fast model for easy work, expensive model for hard work | 3 |
 
 ---
 
