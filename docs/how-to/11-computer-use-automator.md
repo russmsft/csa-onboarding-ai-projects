@@ -12,13 +12,14 @@ A Python agent loop using Playwright for browser automation. The agent takes a s
 
 ## Prerequisites
 
-- Microsoft Foundry project with **GPT-5.4** deployed (computer-use requires GPT-5.4 or higher)
+- Microsoft Foundry / Azure AI Services resource with **GPT-5.4** deployed (computer-use requires GPT-5.4 or higher)
 - Azure Key Vault for credential storage
+- Azure CLI logged in (`az login`) with **Cognitive Services OpenAI User** on the AI Services resource and **Key Vault Secrets User** on the vault
 - Python 3.11+
-- `playwright`, `azure-ai-projects`, `azure-keyvault-secrets`, `azure-identity`, `Pillow`
+- `playwright`, `openai`, `azure-keyvault-secrets`, `azure-identity`, `Pillow`
 
 ```bash
-pip install azure-ai-projects azure-identity azure-keyvault-secrets \
+pip install "openai>=1.30.0" azure-identity azure-keyvault-secrets \
   playwright Pillow python-dotenv
 
 # Install Playwright browsers
@@ -112,37 +113,45 @@ async def take_screenshot(page: Page) -> tuple[bytes, str]:
     return png_bytes, b64
 
 
-async def execute_action(page: Page, action: dict) -> str:
-    """Execute a computer-use action on the Playwright page."""
-    action_type = action.get("type")
+async def execute_action(page: Page, action) -> str:
+    """Execute a computer-use action (Responses API schema) on the Playwright page.
+
+    `action` is the object from a `computer_call` output item — its `.type`
+    is one of click/double_click/type/keypress/scroll/move/wait/screenshot.
+    """
+    action_type = getattr(action, "type", None)
 
     if action_type == "click":
-        x, y = action["coordinate"]
-        await page.mouse.click(x, y)
-        return f"Clicked at ({x}, {y})"
+        button = getattr(action, "button", "left")
+        await page.mouse.click(action.x, action.y, button=button)
+        return f"Clicked {button} at ({action.x}, {action.y})"
+
+    elif action_type == "double_click":
+        await page.mouse.dblclick(action.x, action.y)
+        return f"Double-clicked at ({action.x}, {action.y})"
 
     elif action_type == "type":
-        await page.keyboard.type(action["text"], delay=50)
-        return f"Typed: {action['text'][:50]}..."
+        await page.keyboard.type(action.text, delay=50)
+        return f"Typed: {action.text[:50]}..."
 
-    elif action_type == "key":
-        keys = action["key"].split("+")
-        if len(keys) > 1:
-            await page.keyboard.press("+".join(keys))
-        else:
-            await page.keyboard.press(keys[0])
-        return f"Pressed key: {action['key']}"
+    elif action_type == "keypress":
+        # action.keys is a list of key names, e.g. ["CTRL", "A"]
+        keys = "+".join(action.keys)
+        await page.keyboard.press(keys)
+        return f"Pressed key: {keys}"
 
     elif action_type == "scroll":
-        x, y = action["coordinate"]
-        direction = action.get("direction", "down")
-        delta = 300 if direction == "down" else -300
-        await page.mouse.move(x, y)
-        await page.mouse.wheel(0, delta)
-        return f"Scrolled {direction} at ({x}, {y})"
+        await page.mouse.move(action.x, action.y)
+        await page.mouse.wheel(
+            getattr(action, "scroll_x", 0), getattr(action, "scroll_y", 0))
+        return f"Scrolled ({action.scroll_x}, {action.scroll_y}) at ({action.x}, {action.y})"
 
-    elif action_type == "screenshot":
-        return "Screenshot taken (no action)"
+    elif action_type == "move":
+        await page.mouse.move(action.x, action.y)
+        return f"Moved to ({action.x}, {action.y})"
+
+    elif action_type in ("wait", "screenshot"):
+        return f"{action_type} (no page mutation)"
 
     else:
         return f"Unknown action type: {action_type}"
@@ -156,15 +165,26 @@ import os
 import json
 import asyncio
 from dotenv import load_dotenv
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from openai import AzureOpenAI
 from browser import init_browser, take_screenshot, execute_action
 
 load_dotenv()
 
-PROJECT_ENDPOINT = os.environ["FOUNDRY_PROJECT_ENDPOINT"]
-ai_client = AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=DefaultAzureCredential())
-openai = ai_client.get_openai_client()
+client = AzureOpenAI(
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    azure_ad_token_provider=get_bearer_token_provider(
+        DefaultAzureCredential(), "https://cognitiveservices.azure.com/.default"),
+    api_version="2025-04-01-preview",
+)
+MODEL = os.environ.get("COMPUTER_USE_MODEL", "gpt-5.4")
+
+COMPUTER_TOOL = [{
+    "type": "computer_use_preview",
+    "display_width": 1280,
+    "display_height": 800,
+    "environment": "browser",
+}]
 
 
 async def run_computer_use_agent(
@@ -174,113 +194,110 @@ async def run_computer_use_agent(
     require_confirmation: bool = True
 ) -> dict:
     """
-    Main agent loop: screenshot → GPT-5.4 → action → confirm → execute → repeat.
+    Main agent loop: screenshot → GPT-5.4 → computer_call → confirm → execute → repeat.
+    Uses the Responses API computer-use loop: each turn replies to the prior
+    response with a `computer_call_output` containing a fresh screenshot.
     """
     page = await init_browser(headless=False)  # headless=False so you can watch
     await page.goto(start_url)
     await page.wait_for_load_state("networkidle")
 
-    messages = [{"role": "user", "content": task}]
-    step = 0
-    actions_taken = []
-
     print(f"\nTask: {task}")
     print(f"Starting at: {start_url}")
     print("-" * 60)
 
-    while step < max_steps:
-        step += 1
-        print(f"\nStep {step}/{max_steps}")
-
-        # Take current screenshot
-        _, screenshot_b64 = await take_screenshot(page)
-
-        # Add screenshot to messages
-        messages.append({
+    # First request: the task plus an initial screenshot.
+    _, screenshot_b64 = await take_screenshot(page)
+    response = client.responses.create(
+        model=MODEL,
+        tools=COMPUTER_TOOL,
+        input=[{
             "role": "user",
             "content": [
-                {
-                    "type": "input_image",
-                    "image_url": f"data:image/png;base64,{screenshot_b64}"
-                }
-            ]
-        })
+                {"type": "input_text", "text": task},
+                {"type": "input_image",
+                 "image_url": f"data:image/png;base64,{screenshot_b64}"},
+            ],
+        }],
+        truncation="auto",
+    )
 
-        # Call GPT-5.4 with computer_use_preview tool
-        response = openai.responses.create(
-            model="gpt-5.4",
-            input=messages,
-            tools=[{"type": "computer_use_preview",
-                    "display_width_px": 1280,
-                    "display_height_px": 800,
-                    "environment": "browser"}],
-            truncation="auto"
-        )
+    step = 0
+    actions_taken = []
+    final_text = ""
 
-        # Parse the response
-        output = response.output
-        text_output = ""
-        action = None
-
-        for item in output:
-            if item.type == "text":
-                text_output = item.text
-                print(f"Agent reasoning: {text_output[:200]}")
-            elif item.type == "computer_use":
-                action = item.action
-
-        # Check if agent signals completion
-        if not action or "task_complete" in text_output.lower():
-            print(f"\nAgent complete: {text_output}")
+    while step < max_steps:
+        # The model returns text (reasoning) and at most one computer_call per turn.
+        final_text = response.output_text or final_text
+        computer_calls = [it for it in response.output
+                          if getattr(it, "type", None) == "computer_call"]
+        if not computer_calls:
+            print(f"\nAgent complete: {final_text}")
             break
 
-        # Format action for display
+        step += 1
+        call = computer_calls[0]
+        action = call.action
         action_dict = action.model_dump() if hasattr(action, "model_dump") else action
+        print(f"\nStep {step}/{max_steps}")
         print(f"Proposed action: {json.dumps(action_dict, indent=2)}")
 
         # Confirmation step — never skip this in production
         if require_confirmation:
-            response_str = input("\nExecute this action? [y/n/abort] ").strip().lower()
-            if response_str == "abort":
+            choice = input("\nExecute this action? [y/n/abort] ").strip().lower()
+            if choice == "abort":
                 print("Aborted by user.")
                 break
-            elif response_str != "y":
+            elif choice != "y":
                 print("Skipping action.")
-                # Add rejection to conversation
-                messages.append({
-                    "role": "user",
-                    "content": "That action was rejected. Try a different approach."
-                })
+                response = client.responses.create(
+                    model=MODEL,
+                    previous_response_id=response.id,
+                    tools=COMPUTER_TOOL,
+                    input=[{"role": "user",
+                            "content": "That action was rejected. Try a different approach."}],
+                    truncation="auto",
+                )
                 continue
 
-        # Execute action
-        result = await execute_action(page, action_dict)
+        # Execute the action, then capture the resulting screen
+        result = await execute_action(page, action)
         print(f"Executed: {result}")
         actions_taken.append({"step": step, "action": action_dict, "result": result})
 
-        # Wait for page to settle
         await asyncio.sleep(1)
         try:
             await page.wait_for_load_state("networkidle", timeout=3000)
         except Exception:
             pass  # Page might not have navigated
 
-        # Add action result to conversation
-        messages.append({
-            "role": "assistant",
-            "content": output
-        })
-        messages.append({
-            "role": "tool",
-            "content": [{"type": "tool_result",
-                         "tool_use_id": getattr(item, "id", ""),
-                         "content": result}]
-        })
+        _, screenshot_b64 = await take_screenshot(page)
+
+        # Reply to the computer_call with a screenshot of the new state.
+        # Acknowledge any pending safety checks the model raised.
+        response = client.responses.create(
+            model=MODEL,
+            previous_response_id=response.id,
+            tools=COMPUTER_TOOL,
+            input=[{
+                "type": "computer_call_output",
+                "call_id": call.call_id,
+                "acknowledged_safety_checks": [
+                    {"id": sc.id, "code": sc.code, "message": sc.message}
+                    for sc in (call.pending_safety_checks or [])
+                ],
+                "output": {
+                    "type": "computer_screenshot",
+                    "image_url": f"data:image/png;base64,{screenshot_b64}",
+                },
+            }],
+            truncation="auto",
+        )
 
     return {
         "steps_taken": step,
         "actions": actions_taken,
-        "final_text": text_output
+        "final_text": final_text,
     }
 ```
 
@@ -331,12 +348,14 @@ Start with a safe public site to validate the loop works before touching anythin
 
 ```python
 # Safe test: navigate Wikipedia
-result = await run_computer_use_agent(
+import asyncio
+
+result = asyncio.run(run_computer_use_agent(
     task="Go to Wikipedia and search for 'Azure AI Foundry'. Tell me the first paragraph of the article.",
     start_url="https://www.wikipedia.org",
     max_steps=5,
     require_confirmation=True
-)
+))
 ```
 
 **Verify the confirmation step works:** The agent should pause and ask `[y/n/abort]` before every action. If it doesn't, check that `require_confirmation=True` is set.
@@ -345,6 +364,8 @@ result = await run_computer_use_agent(
 
 ## Common Mistakes
 
+- **Driving computer-use like Chat Completions.** The Responses API computer-use loop isn't a growing `messages` array with `role: tool` results. Each turn replies to the prior response via `previous_response_id` with a single **`computer_call_output`** item whose `output` is a `{"type": "computer_screenshot", "image_url": ...}`. Parse actions from `computer_call` output items (not `computer_use`/`text`), and read the action fields directly (`action.type`, `action.x/y`, `action.text`, `action.keys`) — there's no `coordinate` tuple.
+- **Ignoring pending safety checks.** A `computer_call` may carry `pending_safety_checks`; echo them back in `acknowledged_safety_checks` on the `computer_call_output` (after your human confirmation) or the model will refuse to continue.
 - **Running headless in production.** Always run `headless=False` during development so you can see what the agent is doing. Switch to headless only after extensive testing.
 - **Credentials in the task string.** Never put actual passwords in the task description — it ends up in model context and logs. Use Key Vault to fetch them and inject only at execution time.
 - **Agent loops infinitely.** Always set a `max_steps` limit. 20 is a reasonable default. Add a hard timeout as a second safety net.
