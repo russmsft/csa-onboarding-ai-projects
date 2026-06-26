@@ -6,19 +6,20 @@ Schedule an agent to search for competitor news, generate trend charts, and stor
 
 ## What You're Building
 
-An Azure Functions timer trigger that runs every Monday morning. It fires a Foundry agent with `WebSearchTool` grounding (Bing) to pull competitor news and product updates, then hands the results to Code Interpreter to generate trend charts. Results land in Cosmos DB. An Azure Static Web App reads from Cosmos DB via a lightweight API and renders the dashboard.
+An Azure Functions timer trigger that runs every Monday morning. It calls the Responses API with the hosted **web search** tool (Bing grounding) to pull competitor news and product updates, then hands the results to **Code Interpreter** to generate trend charts. Results land in Cosmos DB. An Azure Static Web App reads from Cosmos DB via a lightweight API and renders the dashboard.
 
 ---
 
 ## Prerequisites
 
-- Microsoft Foundry project with GPT-4.1 deployed + Bing grounding enabled
+- Microsoft Foundry / Azure AI Services resource with **GPT-4.1** deployed
 - Azure Cosmos DB account (Serverless tier works well for low-frequency writes)
 - Azure Static Web Apps resource
-- Python 3.11+, `azure-functions`, `azure-ai-projects`, `azure-cosmos`
+- Azure CLI logged in (`az login`) with **Cognitive Services OpenAI User** on the AI Services resource and **Cosmos DB Built-in Data Contributor** on the Cosmos account — Entra ID auth, no keys
+- Python 3.11+, `azure-functions`, `openai`, `azure-cosmos`
 
 ```bash
-pip install azure-ai-projects azure-identity azure-functions \
+pip install "openai>=1.30.0" azure-identity azure-functions \
   azure-cosmos python-dotenv
 ```
 
@@ -58,64 +59,62 @@ az cosmosdb sql container create \
   --partition-key-path "/competitor"
 ```
 
-### Step 2 — Enable Bing grounding in Foundry
+### Step 2 — Enable web search grounding in Foundry
+
+The Responses API exposes a hosted **`web_search`** tool. Make sure web/Bing grounding is enabled for your Foundry resource:
 
 1. In the [AI Foundry portal](https://ai.azure.com), navigate to your project
-2. Go to **Settings** → **Connections** → **Add connection**
-3. Select **Bing Search** and authorize
-4. Note the connection name — you'll reference it in `WebSearchTool`
+2. Go to **Settings** → **Connections** and confirm a **Bing Search / web grounding** connection exists (add one if not)
+3. No connection name is needed in code — the hosted `web_search` tool is requested directly on each Responses API call
 
-### Step 3 — Create the intelligence agent
+### Step 3 — Set up the client and instructions
+
+There's no separate agent to register. The Responses API takes the instructions and the tools — hosted **`web_search`** (recent news) and **`code_interpreter`** (the sentiment chart) — on each call. Both tools run their loops server-side.
 
 ```python
 import os
 import json
 import base64
+import re
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from azure.ai.projects import AIProjectClient
-from azure.identity import DefaultAzureCredential
+from azure.identity import DefaultAzureCredential, get_bearer_token_provider
+from openai import AzureOpenAI
 from azure.cosmos import CosmosClient
-from azure.ai.projects.models import (
-    WebSearchTool,
-    CodeInterpreterTool,
-    PromptAgentDefinition,
-    MessageRole
-)
 
 load_dotenv()
 
-PROJECT_ENDPOINT = os.environ["FOUNDRY_PROJECT_ENDPOINT"]
-BING_CONNECTION_NAME = os.environ["BING_CONNECTION_NAME"]
 COSMOS_ENDPOINT = os.environ["COSMOS_ENDPOINT"]
 DB_NAME = "competitor-intel"
 CONTAINER_NAME = "weekly-intel"
+MODEL = os.environ.get("INTEL_MODEL", "gpt-4.1")
 
 credential = DefaultAzureCredential()
-ai_client = AIProjectClient(endpoint=PROJECT_ENDPOINT, credential=credential)
+client = AzureOpenAI(
+    azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
+    azure_ad_token_provider=get_bearer_token_provider(
+        credential, "https://cognitiveservices.azure.com/.default"),
+    api_version="2025-04-01-preview",
+)
 cosmos = CosmosClient(url=COSMOS_ENDPOINT, credential=credential)
 container = cosmos.get_database_client(DB_NAME).get_container_client(CONTAINER_NAME)
 
+TOOLS = [
+    {"type": "web_search"},
+    {"type": "code_interpreter", "container": {"type": "auto"}},
+]
 
-def create_intel_agent() -> str:
-    web_search = WebSearchTool(connection_name=BING_CONNECTION_NAME)
-    code_interpreter = CodeInterpreterTool()
+INSTRUCTIONS = """You are a competitive intelligence analyst. Your job each week:
 
-    agent_def = PromptAgentDefinition(
-        model="gpt-4.1",
-        name="competitive-intel-agent",
-        instructions="""You are a competitive intelligence analyst. Your job each week:
-
-1. Search for recent news (last 7 days) about each competitor provided
+1. Search the web for recent news (last 7 days) about each competitor provided
 2. Categorize findings: product launches, pricing changes, partnerships, executive moves, negative press
 3. Write a brief analysis (2-3 sentences) for each competitor
-4. Use Code Interpreter to generate a sentiment trend bar chart (matplotlib) showing:
+4. Use the python (code_interpreter) tool to generate a sentiment trend bar chart (matplotlib):
    - X-axis: competitor names
    - Y-axis: news sentiment score (-5 to +5)
    - Title: "Competitor News Sentiment — Week of [date]"
-5. Save the chart as a PNG file
-
-Format your text output as JSON with this structure:
+   - Save the chart as a PNG file
+5. End your reply with a single JSON object with this structure:
 {
   "week_of": "YYYY-MM-DD",
   "competitors": [
@@ -130,74 +129,59 @@ Format your text output as JSON with this structure:
   "overall_summary": "..."
 }
 
-Be factual. Cite sources. Don't speculate.""",
-        tools=[*web_search.definitions, *code_interpreter.definitions],
-        tool_resources=code_interpreter.resources,
-    )
-    agent = ai_client.agents.create_version(definition=agent_def)
-    return agent.id
+Be factual. Cite sources. Don't speculate."""
 ```
 
 ### Step 4 — Run the weekly intelligence sweep
 
 ```python
-def run_weekly_intel(agent_id: str, competitors: list[str]) -> dict:
+def run_weekly_intel(competitors: list[str]) -> dict:
     """Run competitive intelligence sweep for the given competitor list."""
     week_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     competitor_list = ", ".join(competitors)
 
-    thread = ai_client.agents.create_thread()
-    ai_client.agents.create_message(
-        thread_id=thread.id,
-        role=MessageRole.USER,
-        content=(
+    print(f"Running intel sweep for: {competitor_list}")
+    response = client.responses.create(
+        model=MODEL,
+        instructions=INSTRUCTIONS,
+        input=(
             f"Run a competitive intelligence sweep for week of {week_str}.\n"
             f"Competitors to analyze: {competitor_list}\n\n"
             "Search for news from the last 7 days for each. "
             "Generate the sentiment chart and return structured JSON."
-        )
+        ),
+        tools=TOOLS,
     )
 
-    print(f"Running intel sweep for: {competitor_list}")
-    run = ai_client.agents.create_and_process_run(
-        thread_id=thread.id,
-        agent_id=agent_id
-    )
+    intel_text = response.output_text
 
-    if run.status != "completed":
-        raise RuntimeError(f"Intel run failed: {run.status}\n{run.last_error}")
+    # The code_interpreter tool runs in a container that holds any files it created
+    container_id = None
+    for item in response.output:
+        if getattr(item, "type", None) == "code_interpreter_call":
+            container_id = getattr(item, "container_id", None)
 
-    messages = ai_client.agents.list_messages(thread_id=thread.id)
-    last = messages.get_last_message_by_role(MessageRole.ASSISTANT)
-
-    # Extract text and file outputs
-    intel_text = ""
-    chart_file_id = None
-
-    for block in last.content:
-        if hasattr(block, "text"):
-            intel_text += block.text.value
-        elif hasattr(block, "image_file"):
-            chart_file_id = block.image_file.file_id
-
-    # Parse JSON from the response
-    intel_data = {}
-    try:
-        # Find JSON block in the response
-        import re
-        json_match = re.search(r'\{[\s\S]*\}', intel_text)
-        if json_match:
+    # Parse the trailing JSON object from the response
+    intel_data = {"raw": intel_text, "week_of": week_str}
+    json_match = re.search(r"\{[\s\S]*\}", intel_text)
+    if json_match:
+        try:
             intel_data = json.loads(json_match.group())
-    except json.JSONDecodeError:
-        intel_data = {"raw": intel_text, "week_of": week_str}
+        except json.JSONDecodeError:
+            pass
 
-    # Download chart if generated
+    # Download the chart PNG the tool generated, if any
     chart_b64 = None
-    if chart_file_id:
-        chart_bytes = b"".join(ai_client.agents.get_file_content(chart_file_id))
-        chart_b64 = base64.b64encode(chart_bytes).decode()
+    if container_id:
+        for f in client.containers.files.list(container_id=container_id).data:
+            name = (getattr(f, "path", None) or f.id)
+            if name.endswith(".png"):
+                content = client.containers.files.content.retrieve(
+                    f.id, container_id=container_id)
+                chart_b64 = base64.b64encode(content.read()).decode()
+                break
 
-    return {**intel_data, "chart_b64": chart_b64, "thread_id": thread.id}
+    return {**intel_data, "chart_b64": chart_b64, "response_id": response.id}
 ```
 
 ### Step 5 — Store results in Cosmos DB
@@ -261,8 +245,7 @@ def weekly_intel_sweep(timer: func.TimerRequest):
 
     logger.info("Starting weekly competitive intelligence sweep")
 
-    agent_id = os.environ.get("INTEL_AGENT_ID") or create_intel_agent()
-    intel_data = run_weekly_intel(agent_id, COMPETITORS)
+    intel_data = run_weekly_intel(COMPETITORS)
     store_intel_results(intel_data, COMPETITORS)
 
     logger.info(f"Sweep complete. Analyzed {len(COMPETITORS)} competitors.")
@@ -331,6 +314,8 @@ az cosmosdb sql query \
 
 ## Common Mistakes
 
+- **Reaching for the old Assistants `agents` API.** `azure-ai-projects` 2.x removed the threads/runs Assistants surface — `AIProjectClient` has no `.agents`, and `WebSearchTool`/`PromptAgentDefinition`/`MessageRole` no longer drive a run. Use `client.responses.create(..., tools=[{"type":"web_search"}, {"type":"code_interpreter", ...}])`; both tools run server-side, so a single call returns the analysis and any generated chart.
+- **Looking for the chart on a message block.** With the Responses API the chart isn't an `image_file` content block — it's a file inside the `code_interpreter` container. Find the `code_interpreter_call` item's `container_id`, then list/download container files (`client.containers.files`).
 - **Bing search returning stale results.** Web Search grounding uses recency ranking but doesn't guarantee freshness. Add `"in the last 7 days"` to your search queries explicitly.
 - **Cosmos DB partition key strategy.** Using `competitor` as partition key is fine for reads by competitor. If you query by `week_of` frequently, use a composite index or add a synthetic partition key.
 - **Chart not generated.** Code Interpreter needs matplotlib installed in its sandbox — it comes pre-installed. If charts aren't appearing, check that your agent instructions explicitly say "save as PNG file attachment."
@@ -347,7 +332,7 @@ az cosmosdb sql query \
 
 ## Resources
 
-- [WebSearchTool (Bing grounding)](https://learn.microsoft.com/azure/ai-foundry/agents/how-to/tools/bing-grounding)
+- [Web search grounding (Bing)](https://learn.microsoft.com/azure/ai-foundry/agents/how-to/tools/bing-grounding)
 - [Azure Cosmos DB Python SDK](https://learn.microsoft.com/python/api/overview/azure/cosmos-readme)
 - [Azure Functions timer trigger](https://learn.microsoft.com/azure/azure-functions/functions-bindings-timer)
 - [Azure Static Web Apps](https://learn.microsoft.com/azure/static-web-apps/overview)
