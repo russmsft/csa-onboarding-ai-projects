@@ -1,3 +1,60 @@
-azure-identity
+# Core dependencies — required to run the code in src/ (Project 01 — Ask My Docs)
+# and shared by every guide. Install with: pip install -r requirements.txt
 openai>=1.30.0
+azure-identity
 python-dotenv
+
+# ---------------------------------------------------------------------------
+# Per-project extras (the guides in docs/how-to/ are not all runnable from this
+# repo). Uncomment the block for the project you're building, or copy the line
+# from that guide's Prerequisites section. Kept here so versions live in one place.
+# ---------------------------------------------------------------------------
+
+# Project 02 — Meeting Minutes Agent: core only
+
+# Project 03 — Email Triage Agent
+# azure-servicebus
+# websocket-client
+# azure-functions
+
+# Project 04 — Policy Chatbot
+# fastapi
+# uvicorn
+
+# Project 05 — Contract Clause Analyzer
+# azure-ai-documentintelligence
+
+# Project 06 — Multi-Agent Incident Responder
+# azure-monitor-query
+# azure-search-documents
+
+# Project 07 — Data Pipeline QA Agent
+# azure-functions
+# azure-storage-blob
+
+# Project 08 — Voice Field Assistant
+# fastapi
+# uvicorn[standard]
+# websockets
+# azure-search-documents
+
+# Project 09 — Competitive Intelligence Dashboard
+# azure-functions
+# azure-cosmos
+
+# Project 10 — Agentic Approval Workflow
+# azure-functions
+# azure-servicebus
+# azure-cosmos
+# msal
+
+# Project 11 — Computer-Use Process Automator
+# azure-keyvault-secrets
+# playwright
+# Pillow
+
+# Project 12 — Multi-Modal Quality Inspector
+# azure-eventhub
+# azure-search-documents
+# azure-cosmos
+# Pillow

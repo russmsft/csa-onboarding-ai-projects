@@ -56,8 +56,8 @@ az login
 
 # Create a Foundry resource and project in the portal: https://ai.azure.com
 
-# Install the Foundry SDK
-pip install azure-ai-projects azure-identity
+# Install the core dependencies (the guides add their own per-project extras)
+pip install -r requirements.txt
 ```
 
 ---
