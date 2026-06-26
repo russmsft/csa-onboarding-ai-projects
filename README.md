@@ -1,5 +1,7 @@
 # AI Projects for Cloud Solution Architects
 
+![AI-Ready](https://img.shields.io/badge/AI--Ready-11%2F12-gold)
+
 A curated portfolio of **12 AI project ideas** — each with a step-by-step build guide — for Cloud Solution Architects at Microsoft CSU Cloud & AI, plus a **production-hardening guide** for taking them to production. Build them to **sharpen your AI skills**, **show customers what's possible**, and **kick-start co-build POCs**. Everything runs on **Microsoft Foundry** (not standalone Azure OpenAI, not third-party).
 
 You know cloud. These projects build your fluency with the AI stack and leave you with working demos on your laptop — not slides. So when a customer asks *"so what can this actually do?"*, you show them.
@@ -415,7 +417,7 @@ The Ask My Docs demo is fully runnable from this repo:
 
 ```bash
 # Install dependencies
-pip install "openai>=1.30.0" azure-identity python-dotenv
+pip install -r requirements.txt
 
 # Configure your endpoint
 cp .env.example .env        # then edit AZURE_OPENAI_ENDPOINT

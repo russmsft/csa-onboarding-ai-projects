@@ -14,7 +14,7 @@ This is a portfolio of AI projects for Microsoft Cloud Solution Architects — 1
 
 ```bash
 # Install dependencies
-pip install "openai>=1.30.0" azure-identity python-dotenv
+pip install -r requirements.txt
 
 # Set up environment
 cp .env.example .env

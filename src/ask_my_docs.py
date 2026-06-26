@@ -46,7 +46,7 @@ def upload_document(doc_path: str):
     """Upload a document (PDF, .txt, .md) to Foundry file storage and return the file object."""
     path = pathlib.Path(doc_path)
     if not path.exists():
-        raise FileNotFoundError(f"PDF not found: {pdf_path}")
+        raise FileNotFoundError(f"Document not found: {path}")
     print(f"Uploading {path.name} ({path.stat().st_size // 1024} KB)...")
     with open(path, "rb") as f:
         uploaded = openai.files.create(file=f, purpose="assistants")

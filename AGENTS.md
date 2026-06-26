@@ -14,7 +14,6 @@ The audience is Cloud Solution Architects with solid cloud experience building h
 
 | Path | Purpose |
 | --- | --- |
-| `README.md` | Entry point, learning path, prerequisites, and guide index |
 | `README.md` | Landing page and master list of 12 project ideas plus a cross-region failover production-hardening guide, roadmap, service mappings, and per-project guide links |
 | `docs/how-to/NN-<name>.md` | Step-by-step build guides matching the numbered project list |
 | `src/ask_my_docs.py` | Working Python RAG demo using Azure OpenAI Responses API and File Search |

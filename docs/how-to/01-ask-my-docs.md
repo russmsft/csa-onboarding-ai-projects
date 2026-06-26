@@ -69,7 +69,7 @@ This is the fastest path to production RAG (Retrieval-Augmented Generation) — 
 - A document you want to query (PDF, .txt, .md — a product spec, runbook, or policy works great)
 
 ```bash
-pip install "openai>=1.30.0" azure-identity python-dotenv
+pip install -r requirements.txt
 ```
 
 ---
@@ -113,7 +113,7 @@ Run through this before every demo to avoid surprises:
 | Step 1 — Set endpoint | `.env` file + `load_dotenv()` at the top |
 | Step 2 — Install deps | one-time terminal command |
 | Step 3 — Create client | lines 28–37, the `AzureOpenAI(...)` block |
-| Step 4 — Upload + vector store | `upload_pdf()` and `create_vector_store()` functions |
+| Step 4 — Upload + vector store | `upload_document()` and `create_vector_store()` functions |
 | Step 5 — Ask questions | `ask()` function |
 | Step 6 — Wire together | `main()` at the bottom |
 
@@ -139,7 +139,7 @@ cp .env.example .env
 ### Step 2 — Install dependencies
 
 ```bash
-pip install "openai>=1.30.0" azure-identity python-dotenv
+pip install -r requirements.txt
 ```
 
 ### Step 3 — Create the client
@@ -175,9 +175,11 @@ openai = AzureOpenAI(
 import pathlib
 import time
 
-def upload_pdf(pdf_path: str):
+def upload_document(doc_path: str):
     """Upload a document to your Foundry resource and return the file object."""
-    path = pathlib.Path(pdf_path)
+    path = pathlib.Path(doc_path)
+    if not path.exists():
+        raise FileNotFoundError(f"Document not found: {path}")
     print(f"Uploading {path.name} ({path.stat().st_size // 1024} KB)...")
     with open(path, "rb") as f:
         uploaded = openai.files.create(file=f, purpose="assistants")
@@ -267,7 +269,7 @@ def main():
     PDF_PATH = "your-document.pdf"    # ← change to your PDF
     STORE_NAME = "ask-my-docs-store"
 
-    uploaded = upload_pdf(PDF_PATH)
+    uploaded = upload_document(PDF_PATH)
     vs = create_vector_store(uploaded.id, STORE_NAME)
 
     questions = [
