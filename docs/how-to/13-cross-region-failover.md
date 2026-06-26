@@ -37,28 +37,7 @@ These are the realities that shape every decision below:
 
 ## Architecture
 
-```
-                          Client
-                            │
-                            ▼
-              ┌─────────────────────────────┐
-              │   Azure Front Door (global)  │   health probes + failover routing
-              └──────────────┬──────────────┘
-                 PRIMARY      │      SECONDARY
-        ┌────────────────────┐│┌────────────────────┐
-        │  APIM (AI Gateway) │││  APIM (AI Gateway) │   auth · rate limit · routing · logging
-        └─────────┬──────────┘│└─────────┬──────────┘
-                  ▼           │          ▼
-        ┌────────────────────┐│┌────────────────────┐
-        │  Foundry models    │││  Foundry models    │   identical name + version + config
-        │  + Agent Service   │││  + Agent Service   │   (warm standby — recreated on failover)
-        └─────────┬──────────┘│└─────────┬──────────┘
-                  ▼           │          ▼
-        ┌─────────────────────────────────────────────┐
-        │  Data layer (geo-replicated / restorable)    │
-        │  Cosmos DB · AI Search · Storage · Key Vault │
-        └─────────────────────────────────────────────┘
-```
+![Cross-region failover architecture: Client → Azure Front Door → primary and secondary regions (each with APIM AI Gateway and Foundry models + Agent Service) → shared geo-replicated data layer](images/13-cross-region-failover-architecture.png)
 
 Traffic routing and detection live above the regions; the data layer is replicated beneath them. The two regions are mirror images — that symmetry is what makes failover a routing change instead of a rebuild.
 
