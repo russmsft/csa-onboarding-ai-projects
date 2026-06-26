@@ -30,27 +30,7 @@ pip install azure-ai-projects azure-identity azure-eventhub \
 
 ## Architecture
 
-```
-Factory Camera
-        │ MQTT
-        ▼
-Azure IoT Hub
-        │ Message routing
-        ▼
-Azure Event Hubs (images-stream)
-        │
-        ▼
-Agent Process (Microsoft Agent Framework)
-  ├── Step 1: Decode image from Event Hub message
-  ├── Step 2: GPT-5.4 vision analysis
-  │           └── Identify defect type, location, severity
-  ├── Step 3: Embed image description → vector search
-  │           └── Azure AI Search: defect catalog
-  │               (find similar known defects)
-  ├── Step 4: Compute defect confidence score
-  └── Step 5: Write to Cosmos DB
-              └── If confidence > threshold → Azure Monitor alert
-```
+![Multi-Modal Quality Inspector architecture: factory camera → Azure IoT Hub → Event Hubs → Agent Framework with GPT-5.4 vision → Azure AI Search defect catalog → Cosmos DB → Azure Monitor alert](images/12-multimodal-quality-inspector-architecture.png)
 
 ---
 

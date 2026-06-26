@@ -36,30 +36,7 @@ pip install "openai>=1.30.0" azure-identity azure-servicebus websocket-client az
 
 ## Architecture
 
-```
-Service Bus: incoming-email queue
-        │
-        ▼
-Azure Function (trigger)
-        │
-        ▼
-Stage 1: GPT-4.1-mini
-  ├── Classify urgency (high/medium/low)
-  └── Classify category (billing/technical/general)
-        │
-        ▼
-Stage 2: GPT-5.4-mini
-  └── Draft response using knowledge base context
-        │
-        ▼
-Stage 3: FunctionTool → route_email()
-  ├── billing-team queue
-  ├── technical-team queue
-  └── general-team queue
-        │
-        ▼
-Enriched message: original + classification + draft response
-```
+![Email Triage architecture: Service Bus queue → Azure Function → GPT-4.1-mini classify → GPT-5.4-mini draft → route_email to team queues](images/03-email-triage-agent-architecture.png)
 
 ---
 

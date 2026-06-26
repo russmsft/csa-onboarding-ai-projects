@@ -32,26 +32,7 @@ pip install "openai>=1.30.0" azure-ai-documentintelligence azure-identity python
 
 ## Architecture
 
-```
-Contract PDF
-        │
-        ▼
-Azure AI Document Intelligence
-  (Layout model — extracts text, tables, page structure)
-        │
-        ▼
-Clean structured text (markdown)
-        │
-        ▼
-Responses API: GPT-5.4 (1M context)
-  └── code_interpreter tool
-        │  ├── Risk scoring logic (Python)
-        │  └── Generates risk table as CSV + markdown
-        ▼
-Outputs:
-  ├── risk_analysis.md (executive summary + risk table)
-  └── risk_table.csv (clause-by-clause scores)
-```
+![Contract Clause Analyzer architecture: contract PDF → Document Intelligence → structured text → GPT-5.4 with code interpreter → risk analysis outputs](images/05-contract-clause-analyzer-architecture.png)
 
 ---
 

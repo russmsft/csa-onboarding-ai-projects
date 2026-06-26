@@ -76,21 +76,7 @@ pip install "openai>=1.30.0" azure-identity python-dotenv
 
 ## Architecture
 
-```
-You (Python script)
-        │
-        ▼
-AzureOpenAI client (DefaultAzureCredential)
-        │
-        ├─► openai.files.create()          # upload document
-        │
-        ├─► openai.vector_stores.create()  # chunk + embed automatically
-        │
-        └─► openai.responses.create()      # query with file_search tool
-                    │
-                    ▼
-            GPT-4.1-mini ──► Answer + Citations
-```
+![Ask My Docs architecture: Python script → Foundry (Azure OpenAI) → managed vector store → GPT-4.1-mini → answer with citations](images/01-ask-my-docs-architecture.png)
 
 **Data flow:** Document uploaded → chunked and embedded automatically → stored in a managed vector store → retrieved at query time → passed as context to GPT-4.1-mini → response includes source citations.
 

@@ -46,24 +46,7 @@ pip install "openai>=1.30.0" azure-identity python-dotenv
 
 ## Architecture
 
-```
-Audio file (MP3/WAV)
-        │
-        ▼
-Foundry Whisper endpoint
-  (openai.audio.transcriptions.create)
-        │
-        ▼
-Raw transcript (plain text)
-        │
-        ▼
-GPT-4.1-mini + structured prompt
-  (JSON schema enforced via response_format)
-        │
-        ▼
-Structured JSON output:
-  {summary, action_items[], decisions[]}
-```
+![Meeting Minutes architecture: audio file → Foundry Whisper transcription → GPT-4.1-mini structured prompt → structured JSON output](images/02-meeting-minutes-agent-architecture.png)
 
 ---
 

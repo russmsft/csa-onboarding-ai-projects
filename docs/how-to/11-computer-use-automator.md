@@ -31,28 +31,7 @@ playwright install chromium
 
 ## Architecture
 
-```
-Python script
-        │
-        ├── Azure Key Vault (fetch credentials)
-        │
-        ▼
-Playwright (headful Chromium)
-  └── take_screenshot() → PNG bytes
-        │
-        ▼
-Foundry Responses API (GPT-5.4 + computer_use_preview tool)
-  └── Receives: screenshot + task description
-  └── Returns: action (click/type/scroll/key/screenshot)
-        │
-        ▼
-Confirmation prompt (human approval)
-        │  [yes/no/abort]
-        ▼
-Playwright executes action
-        │
-        └── loop until task_complete or max_steps
-```
+![Computer-Use Automator architecture: Python script (credentials from Key Vault) → Playwright screenshot → Responses API GPT-5.4 computer_use → human approval → Playwright executes action in a loop](images/11-computer-use-automator-architecture.png)
 
 ---
 

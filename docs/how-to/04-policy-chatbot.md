@@ -33,26 +33,7 @@ pip install "openai>=1.30.0" azure-identity fastapi uvicorn python-dotenv
 
 ## Architecture
 
-```
-Browser (HTML/JS)
-        │  HTTP POST /chat
-        ▼
-Azure App Service (FastAPI)
-  └── Entra ID auth (Easy Auth middleware)
-        │
-        ▼
-AzureOpenAI client → Responses API (GPT-4.1-mini)
-  └── file_search tool
-        │
-        ▼
-Foundry IQ / vector store (knowledge grounding)
-  ├── HR Policy.pdf
-  ├── IT Security Policy.pdf
-  └── Employee Handbook.pdf
-        │
-        ▼
-Answer + source citations
-```
+![Policy Chatbot architecture: browser → Azure App Service with Entra ID auth → Responses API GPT-4.1-mini file_search → Foundry IQ vector store → cited answer](images/04-policy-chatbot-architecture.png)
 
 ---
 

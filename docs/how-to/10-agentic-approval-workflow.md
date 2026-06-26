@@ -28,36 +28,7 @@ pip install azure-ai-projects azure-identity azure-functions \
 
 ## Architecture
 
-```
-Service Bus: approval-requests queue
-        │
-        ▼
-Azure Function: process_approval_request
-        │
-        ▼
-Foundry Agent (GPT-5.4-mini + Foundry IQ)
-  ├── Check policy: is this request in-policy?
-  └── FunctionTool: determine_approver(request_type, amount)
-        │
-        ▼
-Microsoft Graph API
-  └── POST /chats/{chatId}/messages
-      (Adaptive Card with Approve/Reject buttons)
-        │
-        ▼
-Human approver (in Teams)
-  └── Clicks Approve or Reject
-        │
-        ▼
-Teams Action: HTTP POST → Azure Function: handle_approval_response
-        │
-        ▼
-Cosmos DB: decisions container
-  └── {request_id, decision, approver, timestamp, reasoning}
-        │
-        ▼
-Confirmation: update requester via Service Bus
-```
+![Agentic Approval Workflow architecture: Service Bus → Azure Function → Foundry Agent GPT-5.4-mini with Foundry IQ → Microsoft Graph Adaptive Card in Teams → human approver → Azure Function → Cosmos DB decisions](images/10-agentic-approval-workflow-architecture.png)
 
 ---
 

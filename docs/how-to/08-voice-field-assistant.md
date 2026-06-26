@@ -27,22 +27,7 @@ pip install fastapi "uvicorn[standard]" websockets azure-ai-projects \
 
 ## Architecture
 
-```
-Mobile Browser (HTTPS + WSS)
-  ├── getUserMedia() → PCM audio chunks
-  └── AudioContext → plays response audio
-        │ WebSocket
-        ▼
-FastAPI Server (Azure App Service)
-  ├── Client WS handler
-  ├── Search grounding: Azure AI Search
-  │     └── Equipment manual chunks
-  └── Foundry Realtime session
-        │ WebSocket (wss://...)
-        ▼
-GPT-4o Realtime (Foundry)
-  └── speech in → reasoning → speech out
-```
+![Voice Field Assistant architecture: mobile browser → FastAPI on App Service grounding with Azure AI Search and streaming to GPT-4o Realtime](images/08-voice-field-assistant-architecture.png)
 
 ---
 

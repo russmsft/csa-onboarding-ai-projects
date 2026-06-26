@@ -33,27 +33,7 @@ pip install "openai>=1.30.0" azure-identity azure-monitor-query \
 
 ## Architecture
 
-```
-Incident trigger (alert / manual)
-        │
-        ▼
-Python Orchestrator
-  ├──── [concurrent] ────┐
-  │                       │
-  ▼                       ▼
-Agent 1: Diagnostician   Agent 2: Researcher
-  └── function tool          └── function tool
-      (App Insights KQL)       (AI Search runbook query)
-  │                       │
-  └──── [fan-in] ─────────┘
-                │
-                ▼
-        Agent 3: Communicator
-          └── Draft stakeholder update
-                │
-                ▼
-        Slack/Teams/Email output
-```
+![Multi-Agent Incident Responder architecture: incident trigger → Python orchestrator fans out to Diagnostician (App Insights) and Researcher (AI Search), fans in to Communicator → Slack/Teams/Email](images/06-multi-agent-incident-responder-architecture.png)
 
 ---
 

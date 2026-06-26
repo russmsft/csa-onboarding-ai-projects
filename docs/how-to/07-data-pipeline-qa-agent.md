@@ -27,35 +27,7 @@ pip install azure-ai-projects azure-identity azure-functions \
 
 ## Architecture
 
-```
-ADF/Synapse pipeline completes
-        │
-        ▼
-Event Grid (pipeline.run.completed event)
-        │
-        ▼
-Azure Function (event trigger)
-  └── Collects: row count, null rates, schema, run duration
-        │
-        ▼
-Azure Blob Storage
-  └── Historical baselines (JSON per pipeline/table)
-        │
-        ▼
-Foundry Agent: GPT-4.1-mini + Code Interpreter
-  └── Anomaly detection Python code
-        │  ├── Row count deviation (z-score)
-        │  ├── Null rate spike detection
-        │  ├── Schema drift check
-        │  └── Duration anomaly
-        │
-        ▼
-QA Report (markdown) + alert decision
-        │
-        ▼
-FunctionTool: send_alert()  (if anomaly detected)
-  └── → Azure Monitor alert / Teams webhook
-```
+![Data Pipeline QA architecture: ADF/Synapse pipeline → Event Grid → Azure Function → Blob Storage baselines → Foundry Agent GPT-4.1-mini with Code Interpreter → QA report and alert](images/07-data-pipeline-qa-agent-architecture.png)
 
 ---
 

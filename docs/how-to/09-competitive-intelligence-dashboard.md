@@ -26,28 +26,7 @@ pip install azure-ai-projects azure-identity azure-functions \
 
 ## Architecture
 
-```
-Azure Functions Timer (every Monday 07:00 UTC)
-        │
-        ▼
-Foundry Agent: GPT-4.1
-  ├── WebSearchTool (Bing grounding)
-  │     └── Competitor news queries
-  └── CodeInterpreterTool
-        └── Trend chart generation (matplotlib)
-        │
-        ▼
-Cosmos DB (competitor-intel container)
-  └── One document per weekly run per competitor
-        │
-        ▼
-Azure Functions HTTP API
-  └── /api/intelligence?weeks=8
-        │
-        ▼
-Azure Static Web App
-  └── Dashboard (React / vanilla JS)
-```
+![Competitive Intelligence architecture: Functions timer → Foundry Agent GPT-4.1 with Web Search and Code Interpreter → Cosmos DB → Functions HTTP API → Azure Static Web App dashboard](images/09-competitive-intelligence-dashboard-architecture.png)
 
 ---
 
